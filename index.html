@@ -977,6 +977,9 @@ function collectData() {
 // ============================
 // PDF GENERATION (FIXED BLANK BUG)
 // ============================
+// ============================
+// PDF GENERATION (TRIK SULAP UI - 100% AMPUH)
+// ============================
 function generatePDF() {
   const data = collectData();
   buildPDFContent(data);
@@ -985,52 +988,50 @@ function generatePDF() {
   const loading = document.getElementById('loading');
   loading.classList.add('show');
 
-  const el = document.getElementById('pdf-content');
-  
-  // Simpan posisi scroll saat ini
-  const currentScroll = window.scrollY;
-  
-  // Paksa pindah ke atas untuk menghindari blank
-  window.scrollTo(0, 0);
+  // Ambil elemen utama
+  const mainElement = document.getElementById('main');
+  const sidebarElement = document.getElementById('sidebar');
+  const pdfElement = document.getElementById('pdf-content');
 
-  // Setel posisi layout PDF agar stabil
-  el.style.display = 'block';
-  el.style.position = 'absolute';
-  el.style.top = '0';
-  el.style.left = '0';
-  el.style.width = '100%';
-  el.style.zIndex = '50';
-  el.style.backgroundColor = '#ffffff';
+  // 1. Simpan posisi scroll pengguna saat ini
+  const currentScroll = window.scrollY;
+
+  // 2. FOOLPROOF HACK: Sembunyikan UI utama sementara!
+  // Ini memaksa browser menganggap halaman hanya berisi kertas PDF.
+  // Otomatis koordinat reset ke atas (0,0) sehingga mustahil blank.
+  mainElement.style.display = 'none';
+  sidebarElement.style.display = 'none';
+  pdfElement.style.display = 'block';
 
   const opt = {
     margin: [10, 10, 10, 10],
     filename: `Modul-Kokurikuler-${data.namaSatuan.replace(/\s+/g,'-')}.pdf`,
     image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { 
-      scale: 2, 
-      useCORS: true, 
-      logging: false,
-      scrollY: 0 
-    },
+    html2canvas: { scale: 2, useCORS: true, logging: false },
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
   };
 
-  // Tunggu 500ms agar browser selesai render form di atas
+  // 3. Beri waktu 500ms agar browser me-render kertas PDF sebelum dipotret
   setTimeout(() => {
-    html2pdf().set(opt).from(el).save().then(() => {
-      // Kembalikan ke posisi semula
-      el.style.display = 'none';
-      el.style.position = 'static';
-      el.style.zIndex = 'auto';
+    html2pdf().set(opt).from(pdfElement).save().then(() => {
+      // 4. KEMBALIKAN SEMUA KE TAMPILAN AWAL
+      pdfElement.style.display = 'none';
+      mainElement.style.display = ''; 
+      sidebarElement.style.display = '';
+      
+      // 5. Kembalikan layar persis ke posisi pengguna terakhir kali
       window.scrollTo(0, currentScroll);
       
       loading.classList.remove('show');
       showToast('PDF berhasil diunduh!');
     }).catch((err) => {
       console.error("Error PDF: ", err);
-      el.style.display = 'none';
-      el.style.position = 'static';
+      // Jika error, tetap kembalikan UI seperti semula
+      pdfElement.style.display = 'none';
+      mainElement.style.display = '';
+      sidebarElement.style.display = '';
       window.scrollTo(0, currentScroll);
+      
       loading.classList.remove('show');
       showToast('Gagal membuat PDF. Coba lagi.');
     });
