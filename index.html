@@ -991,25 +991,45 @@ function generatePDF() {
   loading.classList.add('show');
 
   const el = document.getElementById('pdf-content');
+  
+  // PERBAIKAN: Paksa elemen ke koordinat 0,0 agar tidak terpengaruh scroll
   el.style.display = 'block';
+  el.style.position = 'absolute';
+  el.style.top = '0';
+  el.style.left = '0';
+  el.style.zIndex = '-10'; // Sembunyikan di belakang layar
 
   const opt = {
-    margin: [10,10,10,10],
+    margin: [10, 10, 10, 10],
     filename: `Modul-Kokurikuler-${data.namaSatuan.replace(/\s+/g,'-')}.pdf`,
     image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true, logging: false },
+    html2canvas: { 
+      scale: 2, 
+      useCORS: true, 
+      logging: false,
+      scrollY: 0, // Paksa tangkapan layar dimulai dari sumbu Y teratas
+      windowWidth: document.documentElement.offsetWidth
+    },
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
   };
 
-  html2pdf().set(opt).from(el).save().then(() => {
-    el.style.display = 'none';
-    loading.classList.remove('show');
-    showToast('PDF berhasil diunduh!');
-  }).catch(() => {
-    el.style.display = 'none';
-    loading.classList.remove('show');
-    showToast('Gagal membuat PDF. Coba lagi.');
-  });
+  // PERBAIKAN: Beri jeda 300ms agar browser selesai me-render DOM sebelum dijadikan PDF
+  setTimeout(() => {
+    html2pdf().set(opt).from(el).save().then(() => {
+      // Kembalikan style seperti semula setelah selesai
+      el.style.display = 'none';
+      el.style.position = 'static';
+      
+      loading.classList.remove('show');
+      showToast('PDF berhasil diunduh!');
+    }).catch((err) => {
+      console.error("PDF Error: ", err);
+      el.style.display = 'none';
+      el.style.position = 'static';
+      loading.classList.remove('show');
+      showToast('Gagal membuat PDF. Coba lagi.');
+    });
+  }, 300);
 }
 
 function buildPDFContent(data) {
