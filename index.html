@@ -1,1225 +1,678 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistem Penyusun Modul Kokurikuler Digital</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --navy: #0f2550;
-      --navy-mid: #1a3a6e;
-      --blue: #1e5fbe;
-      --blue-light: #3b82f6;
-      --accent: #f59e0b;
-      --accent-soft: #fef3c7;
-      --surface: #f8fafc;
-      --surface-2: #f1f5f9;
-      --border: #e2e8f0;
-      --text: #0f172a;
-      --text-mid: #475569;
-      --text-soft: #94a3b8;
-      --success: #059669;
-      --white: #ffffff;
-    }
-
-    * { box-sizing: border-box; }
-
-    body {
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      background: var(--surface);
-      color: var(--text);
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
-
-    /* Sidebar */
-    #sidebar {
-      background: linear-gradient(175deg, var(--navy) 0%, var(--navy-mid) 100%);
-      min-height: 100vh;
-      width: 260px;
-      flex-shrink: 0;
-      position: fixed;
-      left: 0; top: 0; bottom: 0;
-      z-index: 40;
-      display: flex;
-      flex-direction: column;
-      transition: transform 0.3s ease;
-    }
-
-    #sidebar .logo-area {
-      padding: 28px 24px 20px;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-    }
-
-    #sidebar nav a {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 11px 20px;
-      margin: 3px 12px;
-      border-radius: 10px;
-      color: rgba(255,255,255,0.65);
-      font-size: 0.875rem;
-      font-weight: 500;
-      text-decoration: none;
-      transition: all 0.18s ease;
-      cursor: pointer;
-    }
-
-    #sidebar nav a:hover {
-      background: rgba(255,255,255,0.1);
-      color: white;
-    }
-
-    #sidebar nav a.active {
-      background: rgba(255,255,255,0.15);
-      color: white;
-      font-weight: 600;
-    }
-
-    #sidebar nav a svg { flex-shrink: 0; }
-
-    .sidebar-section-label {
-      font-size: 0.65rem;
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: rgba(255,255,255,0.3);
-      padding: 18px 24px 6px;
-    }
-
-    /* Overlay for Mobile Sidebar */
-    #sidebar-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(15, 37, 80, 0.5);
-      backdrop-filter: blur(2px);
-      z-index: 35;
-      transition: opacity 0.3s;
-      opacity: 0;
-    }
-    #sidebar-overlay.show { display: block; opacity: 1; }
-
-    /* Main */
-    #main {
-      margin-left: 260px;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      transition: margin-left 0.3s ease;
-      width: 100%;
-    }
-
-    /* Topbar */
-    #topbar {
-      background: var(--white);
-      border-bottom: 1px solid var(--border);
-      padding: 0 32px;
-      height: 64px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: sticky;
-      top: 0;
-      z-index: 30;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Penyusun Modul Kokurikuler</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    .mobile-menu-btn { display: none; background: transparent; border: none; color: var(--navy); cursor: pointer; padding: 4px; margin-right: 12px;}
-
-    /* Cards */
-    .card {
-      background: var(--white);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 28px;
-      margin-bottom: 20px;
-      box-shadow: 0 1px 3px rgba(15,37,80,0.04), 0 4px 16px rgba(15,37,80,0.03);
-      transition: box-shadow 0.2s;
-    }
-
-    .card:hover { box-shadow: 0 2px 8px rgba(15,37,80,0.08), 0 8px 24px rgba(15,37,80,0.05); }
-
-    .card-header {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      margin-bottom: 22px;
-      padding-bottom: 18px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .card-number {
-      width: 36px; height: 36px;
-      background: linear-gradient(135deg, var(--blue), var(--blue-light));
-      color: white;
-      border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 0.8rem; font-weight: 700;
-      flex-shrink: 0;
-    }
-
-    .card-title { font-size: 1rem; font-weight: 700; color: var(--navy); }
-    .card-subtitle { font-size: 0.8rem; color: var(--text-soft); margin-top: 1px; }
-
-    /* Form elements */
-    label.field-label {
-      display: block;
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: var(--navy);
-      margin-bottom: 6px;
-      letter-spacing: 0.01em;
-    }
-
-    select, input[type="text"], input[type="number"], textarea {
-      width: 100%;
-      padding: 10px 14px;
-      border: 1.5px solid var(--border);
-      border-radius: 10px;
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      font-size: 0.875rem;
-      color: var(--text);
-      background: var(--white);
-      transition: border-color 0.18s, box-shadow 0.18s;
-      outline: none;
-      appearance: none;
-      -webkit-appearance: none;
-    }
-
-    select {
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 12px center;
-      padding-right: 36px;
-    }
-
-    select:focus, input:focus, textarea:focus {
-      border-color: var(--blue-light);
-      box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
-    }
-
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
-
-    /* Checkbox group */
-    .checkbox-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 8px;
-    }
-
-    .checkbox-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 14px;
-      border: 1.5px solid var(--border);
-      border-radius: 10px;
-      cursor: pointer;
-      transition: all 0.15s;
-      font-size: 0.82rem;
-      font-weight: 500;
-      color: var(--text-mid);
-      background: var(--white);
-      user-select: none;
-    }
-
-    .checkbox-item:hover { border-color: var(--blue-light); background: #eff6ff; color: var(--navy); }
-    .checkbox-item input[type="checkbox"] { display: none; }
-
-    .checkbox-item.checked {
-      border-color: var(--blue);
-      background: #eff6ff;
-      color: var(--navy);
-    }
-
-    .checkbox-item.checked .check-box { background: var(--blue); border-color: var(--blue); }
-    .checkbox-item.checked .check-box::after { opacity: 1; }
-
-    .check-box {
-      width: 18px; height: 18px;
-      border: 2px solid var(--border);
-      border-radius: 5px;
-      flex-shrink: 0;
-      transition: all 0.15s;
-      position: relative;
-      background: white;
-    }
-
-    /* POSISI IKON CENTANG */
-    .check-box::after {
-      content: ''; position: absolute; left: 5px; top: 1px;
-      width: 5px; height: 9px;
-      border: 2px solid white; border-top: none; border-left: none;
-      transform: rotate(45deg); opacity: 0; transition: opacity 0.15s;
-    }
-
-    /* Theme pills */
-    .theme-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 18px;
-      border: 2px solid var(--border);
-      border-radius: 100px;
-      cursor: pointer;
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: var(--text-mid);
-      background: white;
-      transition: all 0.18s;
-      user-select: none;
-    }
-
-    .theme-pill:hover { border-color: var(--blue); color: var(--blue); }
-    .theme-pill.active { border-color: var(--blue); background: var(--blue); color: white; }
-
-    /* Buttons */
-    .btn-primary {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 12px 24px;
-      background: linear-gradient(135deg, var(--blue) 0%, var(--blue-light) 100%);
-      color: white; border: none; border-radius: 12px;
-      font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.9rem; font-weight: 700;
-      cursor: pointer; transition: all 0.18s;
-      box-shadow: 0 4px 14px rgba(30,95,190,0.3);
-    }
-
-    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(30,95,190,0.4); }
-
-    .btn-secondary {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 10px 20px;
-      background: white; color: var(--navy);
-      border: 2px solid var(--border); border-radius: 12px;
-      font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.85rem; font-weight: 600;
-      cursor: pointer; transition: all 0.18s;
-    }
-
-    .btn-secondary:hover { border-color: var(--blue); color: var(--blue); background: #eff6ff; }
-
-    .btn-accent {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 10px 20px;
-      background: linear-gradient(135deg, #d97706 0%, var(--accent) 100%);
-      color: white; border: none; border-radius: 12px;
-      font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.85rem; font-weight: 700;
-      cursor: pointer; transition: all 0.18s;
-      box-shadow: 0 4px 14px rgba(245,158,11,0.35);
-    }
-
-    .btn-accent:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(245,158,11,0.45); }
-
-    .btn-add {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 8px 16px; background: var(--surface-2); color: var(--blue);
-      border: 1.5px dashed var(--blue-light); border-radius: 8px;
-      font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.15s;
-      font-family: 'Plus Jakarta Sans', sans-serif;
-    }
-
-    .btn-add:hover { background: #eff6ff; border-style: solid; }
-
-    /* Page views */
-    .page-view { display: none; padding: 28px 32px; max-width: 960px; margin: 0 auto; width: 100%;}
-    .page-view.active { display: block; }
-
-    /* Badge */
-    .badge {
-      display: inline-flex; align-items: center; padding: 3px 10px;
-      border-radius: 100px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.03em;
-    }
-    .badge-blue { background: #dbeafe; color: #1d4ed8; }
-    .badge-green { background: #d1fae5; color: #065f46; }
-    .badge-amber { background: #fef3c7; color: #92400e; }
-
-    /* Action Row Adjustments */
-    .action-row {
-      display: flex; align-items: center; justify-content: space-between; padding: 8px 0 40px; gap: 16px; flex-wrap: wrap;
-    }
-    .action-row .btn-group { display: flex; gap: 12px; flex-wrap: wrap; }
-
-    /* Loading */
-    .loading-overlay {
-      display: none; position: fixed; inset: 0; background: rgba(15,37,80,0.7); backdrop-filter: blur(4px);
-      z-index: 100; align-items: center; justify-content: center; flex-direction: column; gap: 16px;
-    }
-    .loading-overlay.show { display: flex; }
-    .spinner {
-      width: 48px; height: 48px; border: 4px solid rgba(255,255,255,0.2);
-      border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* History table */
-    .history-table { width: 100%; border-collapse: collapse; min-width: 600px; }
-    .history-table th {
-      text-align: left; font-size: 0.75rem; font-weight: 700; color: var(--text-soft); text-transform: uppercase;
-      letter-spacing: 0.06em; padding: 10px 16px; border-bottom: 1px solid var(--border);
-    }
-    .history-table td {
-      padding: 13px 16px; font-size: 0.85rem; border-bottom: 1px solid var(--border);
-      color: var(--text-mid); vertical-align: middle;
-    }
-    .history-table tr:hover td { background: var(--surface); }
-
-    #pdf-content { display: none; }
-
-    /* Toast */
-    #toast {
-      position: fixed; bottom: 24px; right: 24px; background: var(--navy); color: white;
-      padding: 14px 20px; border-radius: 12px; font-size: 0.875rem; font-weight: 600;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.2); transform: translateY(80px); opacity: 0;
-      transition: all 0.3s ease; z-index: 200; display: flex; align-items: center; gap: 10px;
-    }
-    #toast.show { transform: translateY(0); opacity: 1; }
-
-    /* Scrollbar */
-    ::-webkit-scrollbar { width: 6px; height: 6px;}
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: var(--text-soft); }
-
-    /* Responsive Mobile Styles */
-    @media (max-width: 768px) {
-      /* Sidebar adjustments */
-      #sidebar { transform: translateX(-100%); }
-      #sidebar.open { transform: translateX(0); }
-      #main { margin-left: 0; width: 100vw;}
-      .mobile-menu-btn { display: block; }
-      
-      /* Layout adjustments */
-      #topbar { padding: 0 16px; }
-      .page-view { padding: 16px 16px; }
-      .card { padding: 20px; }
-      .form-grid, .form-grid-3 { grid-template-columns: 1fr; }
-      
-      /* Action row spacing for mobile */
-      .action-row { flex-direction: column; align-items: stretch; }
-      .action-row .btn-group { flex-direction: column; }
-      .btn-secondary, .btn-accent { width: 100%; justify-content: center; }
-
-      /* Topbar text adjustments */
-      #page-title { font-size: 0.95rem !important; }
-      #page-subtitle { font-size: 0.7rem !important; display: none; } /* Hide subtitle to save space */
-      .topbar-actions .btn-secondary span { display: none; } /* Hide 'Reset' text, show only icon */
-      .topbar-actions .btn-accent span { display: none; } /* Hide 'Simpan' text, show only icon */
-    }
-  </style>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        /* Sidebar Mobile Overlay */
+        .sidebar-overlay { display: none; }
+        .sidebar-overlay.active { display: block; }
+        /* Smooth transitions */
+        .transition-all-300 { transition: all 0.3s ease; }
+    </style>
 </head>
-<body>
+<body class="flex h-screen overflow-hidden text-slate-800">
 
-<div class="loading-overlay" id="loading">
-  <div class="spinner"></div>
-  <p style="color:white;font-weight:600;font-size:0.9rem;">Menyiapkan dokumen PDF...</p>
-</div>
+    <div id="mobile-overlay" class="sidebar-overlay fixed inset-0 bg-slate-900/50 z-40 lg:hidden" onclick="toggleSidebar()"></div>
 
-<div id="toast">
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-  <span id="toast-msg">Berhasil disimpan!</span>
-</div>
-
-<div style="display:flex; min-height:100vh; position: relative;">
-
-  <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
-
-  <aside id="sidebar">
-    <div class="logo-area">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">
-        <div style="width:38px;height:38px;background:linear-gradient(135deg,#3b82f6,#60a5fa);border-radius:10px;display:flex;align-items:center;justify-content:center;">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-        </div>
-        <div>
-          <div style="color:white;font-size:0.85rem;font-weight:800;line-height:1.2;">ModulKu</div>
-          <div style="color:rgba(255,255,255,0.4);font-size:0.65rem;font-weight:500;">Kokurikuler Digital</div>
-        </div>
-        <button class="mobile-menu-btn" style="margin-left:auto; color:white;" onclick="toggleSidebar()">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-        </button>
-      </div>
-    </div>
-
-    <div style="padding:16px 0;flex:1;">
-      <div class="sidebar-section-label">Menu Utama</div>
-      <nav>
-        <a class="active" onclick="showPage('buat-modul')">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
-          Buat Modul Baru
-        </a>
-        <a onclick="showPage('riwayat')">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          Riwayat Modul
-        </a>
-        <a onclick="showPage('pengaturan')">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-          Pengaturan Profil
-        </a>
-      </nav>
-
-      <div class="sidebar-section-label" style="margin-top:12px;">Panduan</div>
-      <nav>
-        <a href="#" onclick="return false;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          Bantuan & FAQ
-        </a>
-      </nav>
-    </div>
-
-    <div style="padding:16px;margin:12px;background:rgba(255,255,255,0.06);border-radius:12px;border:1px solid rgba(255,255,255,0.08);">
-      <div style="display:flex;align-items:center;gap:10px;">
-        <div style="width:32px;height:32px;background:linear-gradient(135deg,#fbbf24,#f59e0b);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:800;color:white;">G</div>
-        <div>
-          <div style="color:white;font-size:0.8rem;font-weight:600;">Guru Pengampu</div>
-          <div style="color:rgba(255,255,255,0.4);font-size:0.67rem;">Administrator</div>
-        </div>
-      </div>
-    </div>
-  </aside>
-
-  <main id="main">
-
-    <div id="topbar">
-      <div style="display:flex; align-items:center;">
-        <button class="mobile-menu-btn" onclick="toggleSidebar()">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-        </button>
-        <div>
-          <h1 style="font-size:1.05rem;font-weight:800;color:var(--navy);" id="page-title">Buat Modul Baru</h1>
-          <p style="font-size:0.75rem;color:var(--text-soft);margin-top:1px;" id="page-subtitle">Isi formulir berikut untuk menyusun modul kokurikuler digital</p>
-        </div>
-      </div>
-      <div class="topbar-actions" style="display:flex;align-items:center;gap:10px;">
-        <button class="btn-secondary" style="padding:8px 16px;font-size:0.8rem;" onclick="resetForm()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12a9 9 0 109-9M3 3v6h6"/></svg>
-          <span>Reset Formulir</span>
-        </button>
-      </div>
-    </div>
-
-    <div class="page-view active" id="page-buat-modul">
-
-      <div class="card">
-        <div class="card-header">
-          <div class="card-number">1</div>
-          <div>
-            <div class="card-title">Identitas & Tujuan</div>
-            <div class="card-subtitle">Informasi dasar satuan pendidikan dan tujuan penggunaan modul</div>
-          </div>
-          <span class="badge badge-blue" style="margin-left:auto;">Wajib</span>
-        </div>
-
-        <div class="form-grid" style="margin-bottom:16px;">
-          <div>
-            <label class="field-label">Identitas Satuan Pendidikan</label>
-            <select id="identitas" onchange="handleIdentitasChange()">
-              <option value="">— Pilih Identitas —</option>
-              <option value="Sekolah">Sekolah</option>
-              <option value="Madrasah">Madrasah</option>
-            </select>
-          </div>
-          <div>
-            <label class="field-label">Tujuan Penggunaan</label>
-            <select id="tujuan">
-              <option value="">— Pilih Tujuan —</option>
-              <option>Modul Kokurikuler</option>
-              <option>LKS (Lembar Kerja Siswa)</option>
-              <option>Draft Asesmen Dimensi Profil Lulusan</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-grid" style="margin-bottom:16px;">
-          <div>
-            <label class="field-label">Jenjang Sekolah</label>
-            <select id="jenjang">
-              <option value="">— Pilih Identitas Dulu —</option>
-            </select>
-          </div>
-          <div>
-            <label class="field-label">Fase Belajar</label>
-            <input type="text" id="fase" placeholder="cth: Fase A, Fase B, Fase C...">
-          </div>
-        </div>
-
-        <div>
-          <label class="field-label">Nama Satuan Pendidikan</label>
-          <input type="text" id="namaSatuan" placeholder="cth: SDN 01 Wonosobo, MA Al-Hikmah...">
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-header">
-          <div class="card-number">2</div>
-          <div>
-            <div class="card-title">Konteks Pengembangan Kokurikuler</div>
-            <div class="card-subtitle">Pilih tema dan topik yang relevan untuk modul ini</div>
-          </div>
-        </div>
-
-        <label class="field-label">Pilih Kategori Tema</label>
-        <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px;">
-          <label class="theme-pill" id="pill-lintasmapel" onclick="selectTheme('lintas-mapel')">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
-            Tema Lintas Mapel
-          </label>
-          <label class="theme-pill" id="pill-7kebiasaan" onclick="selectTheme('7-kebiasaan')">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-            7 Kebiasaan Anak Indonesia Hebat
-          </label>
-          <label class="theme-pill" id="pill-lainnya" onclick="selectTheme('lainnya')">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
-            Tema Lainnya
-          </label>
-        </div>
-
-        <div id="theme-lintas-mapel" style="display:none;">
-          <label class="field-label" style="margin-bottom:10px;">Pilih Sub-Tema (dapat lebih dari satu)</label>
-          <div class="checkbox-grid" id="cl-lintas-mapel"></div>
-        </div>
-
-        <div id="theme-7-kebiasaan" style="display:none;">
-          <label class="field-label" style="margin-bottom:10px;">Pilih Kebiasaan (dapat lebih dari satu)</label>
-          <div class="checkbox-grid" id="cl-7kebiasaan"></div>
-        </div>
-
-        <div id="theme-lainnya" style="display:none;">
-          <label class="field-label">Tema Lainnya (tuliskan)</label>
-          <input type="text" id="tema-lainnya-input" placeholder="Tuliskan tema yang Anda kembangkan...">
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-header">
-          <div class="card-number">3</div>
-          <div>
-            <div class="card-title">Target Dimensi Profil Lulusan</div>
-            <div class="card-subtitle">Pilih dimensi yang menjadi target capaian modul ini</div>
-          </div>
-        </div>
-        <div class="checkbox-grid" id="cl-dimensi"></div>
-      </div>
-
-      <div class="card">
-        <div class="card-header">
-          <div class="card-number">4</div>
-          <div>
-            <div class="card-title">Praktik Pedagogik</div>
-            <div class="card-subtitle">Pendekatan dan strategi pembelajaran yang digunakan</div>
-          </div>
-        </div>
-
-        <div class="form-grid" style="margin-bottom:16px;">
-          <div>
-            <label class="field-label">Pendekatan Belajar</label>
-            <select id="pendekatan" onchange="handlePendekatanChange()">
-              <option value="">— Pilih Pendekatan —</option>
-              <option>Deep Learning</option>
-              <option>PjBL (Project-Based Learning)</option>
-              <option>Inquiry Based Learning</option>
-              <option>PBL (Problem-Based Learning)</option>
-              <option>Experiential Learning</option>
-              <option>Service Learning</option>
-              <option>STEAM</option>
-              <option value="Lainnya">Lainnya</option>
-            </select>
-          </div>
-          <div>
-            <label class="field-label">Fokus Pengalaman Belajar</label>
-            <select id="fokus">
-              <option value="">— Pilih Fokus —</option>
-              <option>Memahami (mindful, joyful, meaningful)</option>
-              <option>Mengaplikasi</option>
-              <option>Merefleksi</option>
-            </select>
-          </div>
-        </div>
-
-        <div id="pendekatan-lainnya" style="display:none;margin-bottom:16px;">
-          <label class="field-label">Pendekatan Lainnya (tuliskan)</label>
-          <input type="text" id="pendekatan-lainnya-input" placeholder="Tuliskan pendekatan yang digunakan...">
-        </div>
-
-        <div style="margin-bottom:16px;">
-          <label class="field-label" style="margin-bottom:10px;">Kondisi Lingkungan</label>
-          <div class="checkbox-grid" id="cl-lingkungan"></div>
-        </div>
-
-        <div class="form-grid">
-          <div>
-            <label class="field-label">Alokasi Waktu (menit/jam)</label>
-            <input type="text" id="alokasi-waktu" placeholder="cth: 120 menit, 4 x 45 menit...">
-          </div>
-          <div>
-            <label class="field-label">Jumlah Pertemuan (Sesi)</label>
-            <input type="number" id="pertemuan" placeholder="cth: 3" min="1">
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-header">
-          <div class="card-number">5</div>
-          <div>
-            <div class="card-title">Integrasi Mata Pelajaran</div>
-            <div class="card-subtitle">Pilih mata pelajaran yang terintegrasi dalam modul ini</div>
-          </div>
-        </div>
-        <div class="checkbox-grid" id="cl-mapel" style="margin-bottom:14px;"></div>
-        <div id="mapel-tambahan-wrap"></div>
-        <div style="margin-top:10px;">
-          <button class="btn-add" onclick="addMapelInput()">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 5v14M5 12h14"/></svg>
-            Tambah Mata Pelajaran Lain
-          </button>
-        </div>
-      </div>
-
-      <div class="action-row">
-        <div style="flex-grow: 1;"></div> 
-        <div class="btn-group">
-          <button class="btn-secondary" onclick="saveToHistory()">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-            Simpan Riwayat
-          </button>
-          <button class="btn-accent" onclick="generatePDF()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Unduh sebagai PDF
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <div class="page-view" id="page-riwayat">
-      <div class="card" style="overflow:hidden;">
-        <div class="card-header" style="flex-wrap: wrap;">
-          <div style="width:36px;height:36px;background:linear-gradient(135deg,#059669,#34d399);border-radius:10px;display:flex;align-items:center;justify-content:center;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          </div>
-          <div>
-            <div class="card-title">Riwayat Modul Tersimpan</div>
-            <div class="card-subtitle">Daftar semua modul yang telah dibuat</div>
-          </div>
-          <span class="badge badge-green" style="margin-left:auto;" id="history-count">0 Modul</span>
-        </div>
-        <div id="history-empty" style="text-align:center;padding:48px 24px;color:var(--text-soft);">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin:0 auto 12px;display:block;opacity:0.3;"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          <p style="font-weight:600;margin-bottom:4px;">Belum ada modul tersimpan</p>
-          <p style="font-size:0.8rem;">Buat modul baru dan klik "Simpan Riwayat" untuk menyimpannya di sini.</p>
-        </div>
-        <div id="history-table-wrap" style="display:none;overflow-x:auto;">
-          <table class="history-table">
-            <thead>
-              <tr>
-                <th>Nama Satuan Pendidikan</th>
-                <th>Jenjang</th>
-                <th>Tujuan</th>
-                <th>Waktu Simpan</th>
-                <th>Aksi</th>
-              </tr>
-            </thead>
-            <tbody id="history-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <div class="page-view" id="page-pengaturan">
-      <div class="card" style="max-width:640px;">
-        <div class="card-header">
-          <div style="width:36px;height:36px;background:linear-gradient(135deg,#7c3aed,#a78bfa);border-radius:10px;display:flex;align-items:center;justify-content:center;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          </div>
-          <div>
-            <div class="card-title">Profil Pengguna</div>
-            <div class="card-subtitle">Informasi akun dan preferensi</div>
-          </div>
-        </div>
-
-        <div style="display:flex;align-items:center;gap:16px;padding:16px;background:var(--surface);border-radius:12px;margin-bottom:20px;flex-wrap:wrap;">
-          <div style="width:56px;height:56px;background:linear-gradient(135deg,#f59e0b,#fbbf24);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:800;color:white;">G</div>
-          <div>
-            <div style="font-weight:700;font-size:1rem;color:var(--navy);">Guru Pengampu</div>
-            <div style="font-size:0.8rem;color:var(--text-soft);">guru@sekolah.sch.id</div>
-            <span class="badge badge-amber" style="margin-top:4px;">Administrator</span>
-          </div>
-        </div>
-
-        <div style="display:grid;gap:14px;">
-          <div>
-            <label class="field-label">Nama Lengkap</label>
-            <input type="text" value="Guru Pengampu" placeholder="Nama lengkap Anda">
-          </div>
-          <div>
-            <label class="field-label">Email</label>
-            <input type="text" value="guru@sekolah.sch.id" placeholder="Alamat email">
-          </div>
-          <div>
-            <label class="field-label">Institusi</label>
-            <input type="text" placeholder="Nama sekolah/madrasah Anda">
-          </div>
-          <div style="padding-top:4px;">
-            <button class="btn-primary" onclick="showToast('Profil berhasil disimpan!')" style="width:100%; justify-content:center;">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
-              Simpan Perubahan
+    <aside id="sidebar" class="bg-slate-900 text-white w-64 flex-shrink-0 flex flex-col fixed inset-y-0 left-0 transform -translate-x-full lg:relative lg:translate-x-0 transition-transform duration-300 z-50">
+        <div class="p-6 border-b border-slate-800 flex items-center justify-between">
+            <div>
+                <h1 class="text-lg font-bold text-blue-400">ModulKu<span class="text-white">.app</span></h1>
+                <p class="text-xs text-slate-400 mt-1">Kokurikuler Digital</p>
+            </div>
+            <button class="lg:hidden text-slate-400 hover:text-white" onclick="toggleSidebar()">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
-          </div>
         </div>
-      </div>
+        
+        <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 px-3">Menu Utama</p>
+            <a href="#" onclick="switchTab('buat-modul', this)" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg bg-blue-600 text-white font-medium transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                Buat Modul Baru
+            </a>
+            <a href="#" onclick="switchTab('riwayat', this)" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white font-medium transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                Riwayat Modul
+            </a>
+            <a href="#" onclick="switchTab('pengaturan', this)" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white font-medium transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                Pengaturan Profil
+            </a>
+        </nav>
+        
+        <div class="p-4 border-t border-slate-800">
+            <div class="flex items-center gap-3 px-3 py-2 bg-slate-800 rounded-lg">
+                <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">G</div>
+                <div>
+                    <p class="text-sm font-medium text-white">Guru Pengampu</p>
+                    <p class="text-xs text-slate-400">Administrator</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+        
+        <header class="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-4 sm:px-8 flex-shrink-0">
+            <div class="flex items-center gap-4">
+                <button class="lg:hidden text-slate-500 hover:text-slate-700" onclick="toggleSidebar()">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </button>
+                <h2 id="page-title" class="text-lg font-bold text-slate-800">Buat Modul Baru</h2>
+            </div>
+            <button onclick="resetForm()" class="text-sm text-slate-500 hover:text-red-600 font-medium flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                <span class="hidden sm:inline">Reset Form</span>
+            </button>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-4 sm:p-8">
+            
+            <div id="view-buat-modul" class="max-w-4xl mx-auto space-y-6 pb-20">
+                <p class="text-slate-500 text-sm mb-6">Isi formulir di bawah ini untuk menyusun dan mengunduh modul kokurikuler Anda.</p>
+                
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center gap-3">
+                        <span class="bg-blue-600 text-white w-7 h-7 rounded-md flex items-center justify-center text-sm font-bold">1</span>
+                        <h3 class="font-semibold text-slate-800">Identitas & Tujuan</h3>
+                    </div>
+                    <div class="p-6 space-y-5">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Identitas Satuan Pendidikan</label>
+                                <select id="identitas" onchange="updateJenjang()" class="w-full border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm bg-white">
+                                    <option value="">-- Pilih --</option>
+                                    <option value="Sekolah">Sekolah</option>
+                                    <option value="Madrasah">Madrasah</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Tujuan Penggunaan</label>
+                                <select id="tujuan" class="w-full border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm bg-white">
+                                    <option value="">-- Pilih --</option>
+                                    <option>Modul Kokurikuler</option>
+                                    <option>LKS (Lembar Kerja Siswa)</option>
+                                    <option>Draft Asesmen Dimensi Profil Lulusan</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Jenjang Sekolah</label>
+                                <select id="jenjang" class="w-full border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm bg-slate-50" disabled>
+                                    <option value="">Pilih identitas dulu</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Fase Belajar</label>
+                                <input type="text" id="fase" placeholder="Contoh: Fase A / Kelas 1" class="w-full border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Nama Satuan Pendidikan</label>
+                            <input type="text" id="nama_satuan" placeholder="Contoh: SDN 1 Nusantara" class="w-full border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center gap-3">
+                        <span class="bg-blue-600 text-white w-7 h-7 rounded-md flex items-center justify-center text-sm font-bold">2</span>
+                        <h3 class="font-semibold text-slate-800">Konteks Pengembangan</h3>
+                    </div>
+                    <div class="p-6 space-y-5">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Pilih Kategori Tema</label>
+                            <select id="kategori_tema" onchange="updateTemaUI()" class="w-full md:w-1/2 border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm bg-white">
+                                <option value="">-- Pilih Kategori --</option>
+                                <option value="lintas_mapel">Tema Lintas Mapel</option>
+                                <option value="kebiasaan">7 Kebiasaan Anak Indonesia Hebat</option>
+                                <option value="lainnya">Tema Lainnya</option>
+                            </select>
+                        </div>
+                        
+                        <div id="wrap_lintas_mapel" class="hidden p-4 bg-slate-50 border border-slate-200 rounded-lg">
+                            <p class="text-xs font-semibold text-slate-500 mb-3">Pilih Sub-Tema (Bisa lebih dari satu):</p>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="chk_lintas_mapel"></div>
+                        </div>
+
+                        <div id="wrap_kebiasaan" class="hidden p-4 bg-slate-50 border border-slate-200 rounded-lg">
+                            <p class="text-xs font-semibold text-slate-500 mb-3">Pilih Kebiasaan (Bisa lebih dari satu):</p>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="chk_kebiasaan"></div>
+                        </div>
+
+                        <div id="wrap_tema_lainnya" class="hidden p-4 bg-slate-50 border border-slate-200 rounded-lg">
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Ketik Tema Anda:</label>
+                            <input type="text" id="tema_lainnya_input" placeholder="Masukkan tema khusus..." class="w-full border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center gap-3">
+                        <span class="bg-blue-600 text-white w-7 h-7 rounded-md flex items-center justify-center text-sm font-bold">3</span>
+                        <h3 class="font-semibold text-slate-800">Target Dimensi Profil Lulusan</h3>
+                    </div>
+                    <div class="p-6">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3" id="chk_dimensi"></div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center gap-3">
+                        <span class="bg-blue-600 text-white w-7 h-7 rounded-md flex items-center justify-center text-sm font-bold">4</span>
+                        <h3 class="font-semibold text-slate-800">Praktik Pedagogik</h3>
+                    </div>
+                    <div class="p-6 space-y-5">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Pendekatan Belajar</label>
+                                <select id="pendekatan" onchange="togglePendekatanLainnya()" class="w-full border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm bg-white">
+                                    <option value="">-- Pilih Pendekatan --</option>
+                                    <option>Deep Learning</option>
+                                    <option>PjBL (Project-Based Learning)</option>
+                                    <option>Inquiry Based Learning</option>
+                                    <option>PBL (Problem-Based Learning)</option>
+                                    <option>Experiential Learning</option>
+                                    <option>Service Learning</option>
+                                    <option>STEAM</option>
+                                    <option value="Lainnya">Lainnya...</option>
+                                </select>
+                                <input type="text" id="pendekatan_lainnya" placeholder="Ketik pendekatan..." class="hidden mt-2 w-full border border-slate-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Fokus Pengalaman Belajar</label>
+                                <select id="fokus" class="w-full border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm bg-white">
+                                    <option value="">-- Pilih Fokus --</option>
+                                    <option>Memahami (mindful, joyful, meaningful)</option>
+                                    <option>Mengaplikasi</option>
+                                    <option>Merefleksi</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Kondisi Lingkungan</label>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3" id="chk_lingkungan"></div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2 border-t border-slate-100">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Alokasi Waktu</label>
+                                <input type="text" id="waktu" placeholder="Contoh: 120 Menit" class="w-full border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Jumlah Pertemuan (Sesi)</label>
+                                <input type="number" id="sesi" placeholder="Contoh: 4" class="w-full border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mb-8">
+                    <div class="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center gap-3">
+                        <span class="bg-blue-600 text-white w-7 h-7 rounded-md flex items-center justify-center text-sm font-bold">5</span>
+                        <h3 class="font-semibold text-slate-800">Integrasi Mata Pelajaran</h3>
+                    </div>
+                    <div class="p-6">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mb-5" id="chk_mapel"></div>
+                        
+                        <div id="dynamic_mapel" class="space-y-3 mb-3"></div>
+                        
+                        <button onclick="addMapelInput()" class="text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1 bg-blue-50 px-3 py-2 rounded-lg transition-colors border border-blue-100">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            Tambah Mata Pelajaran Lain
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row items-center justify-end gap-3 pt-4">
+                    <button onclick="processData(false)" class="w-full sm:w-auto px-6 py-3 bg-white border border-slate-300 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition-all-300 shadow-sm">
+                        Simpan ke Riwayat
+                    </button>
+                    <button onclick="processData(true)" class="w-full sm:w-auto px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all-300 shadow-md shadow-blue-500/30 flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        Simpan & Unduh PDF
+                    </button>
+                </div>
+            </div>
+
+            <div id="view-riwayat" class="hidden max-w-5xl mx-auto">
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+                        <h3 class="font-semibold text-slate-800">Riwayat Modul Tersimpan</h3>
+                        <span id="badge-count" class="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-1 rounded-full">0</span>
+                    </div>
+                    <div class="p-0 overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200">
+                                    <th class="p-4 font-semibold">Satuan Pendidikan</th>
+                                    <th class="p-4 font-semibold">Jenjang</th>
+                                    <th class="p-4 font-semibold">Tanggal Dibuat</th>
+                                    <th class="p-4 font-semibold text-right">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-history" class="divide-y divide-slate-100 text-sm text-slate-700">
+                                </tbody>
+                        </table>
+                        <div id="empty-history" class="p-10 text-center text-slate-400">
+                            <svg class="w-12 h-12 mx-auto mb-3 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
+                            <p>Belum ada riwayat modul.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-pengaturan" class="hidden max-w-2xl mx-auto">
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="bg-slate-50 px-6 py-4 border-b border-slate-200">
+                        <h3 class="font-semibold text-slate-800">Informasi Akun</h3>
+                    </div>
+                    <div class="p-6 space-y-4 text-sm">
+                        <div>
+                            <label class="block font-medium text-slate-700 mb-1">Nama Lengkap</label>
+                            <input type="text" value="Guru Pengampu" class="w-full border border-slate-300 rounded-lg px-4 py-2 bg-slate-50" readonly>
+                        </div>
+                        <div>
+                            <label class="block font-medium text-slate-700 mb-1">Email Terdaftar</label>
+                            <input type="text" value="admin@modulku.app" class="w-full border border-slate-300 rounded-lg px-4 py-2 bg-slate-50" readonly>
+                        </div>
+                        <div class="pt-4 border-t border-slate-100">
+                            <p class="text-slate-500 text-xs">Untuk mengubah data profil, silakan hubungi administrator sistem sekolah Anda.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <div id="loading" class="fixed inset-0 bg-slate-900/80 z-[100] hidden flex-col items-center justify-center backdrop-blur-sm">
+        <div class="w-12 h-12 border-4 border-white/20 border-t-blue-500 rounded-full animate-spin mb-4"></div>
+        <p class="text-white font-medium">Memproses Dokumen PDF...</p>
     </div>
 
-  </main>
-</div>
-
-<div id="pdf-content" style="font-family:'Plus Jakarta Sans',sans-serif;padding:40px;max-width:800px;background:white;color:#0f172a;">
-  <div style="border-bottom:3px solid #1e5fbe;padding-bottom:20px;margin-bottom:24px;">
-    <div style="display:flex;align-items:center;gap:16px;">
-      <div style="width:52px;height:52px;background:linear-gradient(135deg,#1e5fbe,#3b82f6);border-radius:12px;display:flex;align-items:center;justify-content:center;">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-      </div>
-      <div>
-        <h1 style="font-size:1.3rem;font-weight:800;color:#0f2550;margin:0;">MODUL KOKURIKULER DIGITAL</h1>
-        <p style="color:#64748b;font-size:0.85rem;margin:3px 0 0;">Sistem Penyusun Modul Kokurikuler Digital</p>
-      </div>
+    <div id="toast" class="fixed bottom-6 right-6 bg-slate-800 text-white px-5 py-3 rounded-xl shadow-xl transform translate-y-20 opacity-0 transition-all duration-300 z-[60] flex items-center gap-2">
+        <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+        <span id="toast-msg" class="text-sm font-medium">Berhasil disimpan!</span>
     </div>
-  </div>
-  <div id="pdf-body"></div>
-  <div style="margin-top:32px;padding-top:16px;border-top:1px solid #e2e8f0;text-align:center;color:#94a3b8;font-size:0.75rem;">
-    Dicetak pada: <span id="pdf-date"></span> | ModulKu — Sistem Penyusun Modul Kokurikuler Digital
-  </div>
-</div>
+
+    <div id="pdf-template" class="hidden bg-white text-slate-800 p-10 font-sans" style="width: 800px;">
+        <div class="border-b-4 border-blue-700 pb-4 mb-6 flex items-center gap-4">
+            <div class="w-12 h-12 bg-blue-700 text-white rounded-lg flex items-center justify-center">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+            </div>
+            <div>
+                <h1 class="text-2xl font-bold text-slate-900 leading-tight">MODUL KOKURIKULER</h1>
+                <p class="text-slate-500 text-sm">Dokumen Perancangan Pembelajaran Digital</p>
+            </div>
+        </div>
+        
+        <div id="pdf-content-body" class="space-y-4"></div>
+
+        <div class="mt-10 pt-4 border-t border-slate-200 text-center text-slate-400 text-xs">
+            Dicetak otomatis oleh Sistem ModulKu pada <span id="pdf-date"></span>
+        </div>
+    </div>
 
 <script>
-// ============================
-// DATA CONFIG
-// ============================
-const jenjangMap = {
-  Sekolah: ['TK','SD','SMP','SMA','SMK'],
-  Madrasah: ['RA','MI','MTs','MA','MAK']
-};
+    // ==========================================
+    // 1. DATA REFERENSI
+    // ==========================================
+    const dataRef = {
+        jenjang: {
+            Sekolah: ['TK', 'SD', 'SMP', 'SMA', 'SMK'],
+            Madrasah: ['RA', 'MI', 'MTs', 'MA', 'MAK']
+        },
+        temaLintasMapel: [
+            'Literasi & Numerasi', 'Kesehatan & Gaya Hidup Sehat', 'Lingkungan Hidup & Keberlanjutan',
+            'Kewirausahaan', 'Kewargaan & Kebhinekaan', 'Digital Safety & Literasi Digital',
+            'Kreativitas & Inovasi', 'Kepemimpinan & Kolaborasi', 'Budaya & Kearifan Lokal',
+            'Pencegahan Perundungan & Kekerasan', 'Keselamatan & Mitigasi Bencana', 'Penguatan Karakter & Etika Sosial'
+        ],
+        temaKebiasaan: [
+            'Bangun pagi', 'Beribadah tepat waktu', 'Berolahraga secara rutin',
+            'Makan dan minum sehat serta bergizi', 'Gemar belajar',
+            'Bermasyarakat dan peduli lingkungan', 'Tidur tepat waktu'
+        ],
+        dimensi: [
+            'Keimanan dan Ketakwaan kepada Tuhan YME', 'Kreativitas', 'Kemandirian',
+            'Penalaran Kritis', 'Kesehatan', 'Komunikasi', 'Kewargaan', 'Kolaborasi'
+        ],
+        lingkungan: [
+            'Lingkungan Kelas/Sekolah', 'Lingkungan Alam Sekitar', 'Lingkungan Masyarakat/Pasar',
+            'Lingkungan Digital/Maya', 'Lingkungan Rumah Murid', 'Perpustakaan/Laboratorium', 'Tempat Ibadah'
+        ],
+        mapel: [
+            'PAI & Budi Pekerti', 'Matematika', 'IPS', 'PJOK', 'Muatan Lokal',
+            'Pendidikan Pancasila', 'IPAS (IPA & IPS)', 'Informatika', 'Bahasa Inggris',
+            'Bahasa Indonesia', 'IPA', 'Seni & Budaya', 'Prakarya'
+        ]
+    };
 
-const lintasMapelList = [
-  'Literasi & Numerasi','Kesehatan & Gaya Hidup Sehat','Lingkungan Hidup & Keberlanjutan',
-  'Kewirausahaan','Kewargaan & Kebhinekaan','Digital Safety & Literasi Digital',
-  'Kreativitas & Inovasi','Kepemimpinan & Kolaborasi','Budaya & Kearifan Lokal',
-  'Pencegahan Perundungan & Kekerasan','Keselamatan & Mitigasi Bencana','Penguatan Karakter & Etika Sosial'
-];
+    let historyData = JSON.parse(localStorage.getItem('modulHistory') || '[]');
+    let mapelExtraCount = 0;
 
-const kebiasaanList = [
-  'Bangun pagi','Beribadah tepat waktu','Berolahraga secara rutin',
-  'Makan dan minum sehat serta bergizi','Gemar belajar',
-  'Bermasyarakat dan peduli lingkungan','Tidur tepat waktu'
-];
+    // ==========================================
+    // 2. INISIALISASI UI
+    // ==========================================
+    window.onload = () => {
+        buildCheckboxes('chk_lintas_mapel', dataRef.temaLintasMapel, 'lintas');
+        buildCheckboxes('chk_kebiasaan', dataRef.temaKebiasaan, 'kebiasaan');
+        buildCheckboxes('chk_dimensi', dataRef.dimensi, 'dimensi');
+        buildCheckboxes('chk_lingkungan', dataRef.lingkungan, 'lingkungan');
+        buildCheckboxes('chk_mapel', dataRef.mapel, 'mapel');
+        renderHistory();
+    };
 
-const dimensiList = [
-  'Keimanan dan Ketakwaan kepada Tuhan YME','Kreativitas','Kemandirian',
-  'Penalaran Kritis','Kesehatan','Komunikasi','Kewargaan','Kolaborasi'
-];
+    // Fungsi Render Checkbox Murni HTML (Bebas Bug Click)
+    function buildCheckboxes(containerId, items, groupName) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = items.map((item, idx) => `
+            <label class="flex items-start gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors">
+                <input type="checkbox" name="chk_${groupName}" value="${item}" class="mt-0.5 w-4 h-4 text-blue-600 bg-white border-slate-300 rounded focus:ring-blue-500 cursor-pointer">
+                <span class="text-sm text-slate-700 leading-tight">${item}</span>
+            </label>
+        `).join('');
+    }
 
-const lingkunganList = [
-  'Lingkungan Kelas/Sekolah','Lingkungan Alam Sekitar','Lingkungan Masyarakat/Pasar',
-  'Lingkungan Digital/Maya','Lingkungan Rumah Murid','Perpustakaan/Laboratorium','Tempat Ibadah'
-];
+    // ==========================================
+    // 3. LOGIKA KONDISIONAL FORMULIR
+    // ==========================================
+    function updateJenjang() {
+        const iden = document.getElementById('identitas').value;
+        const elJenjang = document.getElementById('jenjang');
+        
+        elJenjang.innerHTML = '<option value="">-- Pilih Jenjang --</option>';
+        if(iden && dataRef.jenjang[iden]) {
+            elJenjang.disabled = false;
+            elJenjang.classList.replace('bg-slate-50', 'bg-white');
+            dataRef.jenjang[iden].forEach(v => {
+                elJenjang.innerHTML += `<option value="${v}">${v}</option>`;
+            });
+        } else {
+            elJenjang.disabled = true;
+            elJenjang.classList.replace('bg-white', 'bg-slate-50');
+        }
+    }
 
-const mapelList = [
-  'PAI & Budi Pekerti','Matematika','IPS','PJOK','Muatan Lokal',
-  'Pendidikan Pancasila','IPAS (IPA & IPS)','Informatika','Bahasa Inggris',
-  'Bahasa Indonesia','IPA','Seni & Budaya','Prakarya'
-];
+    function updateTemaUI() {
+        const val = document.getElementById('kategori_tema').value;
+        document.getElementById('wrap_lintas_mapel').classList.toggle('hidden', val !== 'lintas_mapel');
+        document.getElementById('wrap_kebiasaan').classList.toggle('hidden', val !== 'kebiasaan');
+        document.getElementById('wrap_tema_lainnya').classList.toggle('hidden', val !== 'lainnya');
+    }
 
-let selectedTheme = null;
-let historyData = JSON.parse(localStorage.getItem('modulHistory') || '[]');
+    function togglePendekatanLainnya() {
+        const val = document.getElementById('pendekatan').value;
+        const elLain = document.getElementById('pendekatan_lainnya');
+        if(val === 'Lainnya') {
+            elLain.classList.remove('hidden');
+        } else {
+            elLain.classList.add('hidden');
+            elLain.value = '';
+        }
+    }
 
-// ============================
-// INIT
-// ============================
-function init() {
-  buildCheckboxGroup('cl-lintas-mapel', lintasMapelList);
-  buildCheckboxGroup('cl-7kebiasaan', kebiasaanList);
-  buildCheckboxGroup('cl-dimensi', dimensiList);
-  buildCheckboxGroup('cl-lingkungan', lingkunganList);
-  buildCheckboxGroup('cl-mapel', mapelList);
-  renderHistory();
-}
+    function addMapelInput() {
+        mapelExtraCount++;
+        const id = `mapel_extra_${mapelExtraCount}`;
+        const div = document.createElement('div');
+        div.className = "flex items-center gap-2";
+        div.id = id;
+        div.innerHTML = `
+            <input type="text" placeholder="Ketik nama mata pelajaran..." class="flex-1 border border-slate-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+            <button onclick="document.getElementById('${id}').remove()" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Hapus">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+            </button>
+        `;
+        document.getElementById('dynamic_mapel').appendChild(div);
+    }
 
-// FUNGSI CENTANG 
-function buildCheckboxGroup(containerId, items) {
-  const container = document.getElementById(containerId);
-  container.innerHTML = items.map(item => `
-    <label class="checkbox-item">
-      <input type="checkbox" value="${item}" onchange="this.parentElement.classList.toggle('checked', this.checked)">
-      <span class="check-box"></span>
-      <span>${item}</span>
-    </label>
-  `).join('');
-}
+    // ==========================================
+    // 4. PENGUMPULAN DATA
+    // ==========================================
+    function getCheckedValues(name) {
+        return Array.from(document.querySelectorAll(`input[name="${name}"]:checked`)).map(cb => cb.value);
+    }
 
-// ============================
-// MOBILE MENU TOGGLE
-// ============================
-function toggleSidebar() {
-  const sidebar = document.getElementById('sidebar');
-  const overlay = document.getElementById('sidebar-overlay');
-  sidebar.classList.toggle('open');
-  overlay.classList.toggle('show');
-}
+    function getFormData() {
+        // Ambil Data Tema
+        let temaFinal = '-';
+        const katTema = document.getElementById('kategori_tema').value;
+        if(katTema === 'lintas_mapel') {
+            const arr = getCheckedValues('chk_lintas');
+            temaFinal = arr.length ? 'Lintas Mapel: ' + arr.join(', ') : 'Lintas Mapel';
+        } else if(katTema === 'kebiasaan') {
+            const arr = getCheckedValues('chk_kebiasaan');
+            temaFinal = arr.length ? '7 Kebiasaan: ' + arr.join(', ') : '7 Kebiasaan';
+        } else if(katTema === 'lainnya') {
+            temaFinal = document.getElementById('tema_lainnya_input').value || '-';
+        }
 
-// ============================
-// CONDITIONAL LOGIC
-// ============================
-function handleIdentitasChange() {
-  const val = document.getElementById('identitas').value;
-  const jenjangSel = document.getElementById('jenjang');
-  jenjangSel.innerHTML = '<option value="">— Pilih Jenjang —</option>';
-  if (val && jenjangMap[val]) {
-    jenjangMap[val].forEach(j => {
-      const opt = document.createElement('option');
-      opt.value = j; opt.textContent = j;
-      jenjangSel.appendChild(opt);
-    });
-  }
-}
+        // Ambil Data Pendekatan
+        const p_base = document.getElementById('pendekatan').value;
+        const pendekatanFinal = p_base === 'Lainnya' ? document.getElementById('pendekatan_lainnya').value : p_base;
 
-function selectTheme(theme) {
-  selectedTheme = theme;
-  const pills = document.querySelectorAll('.theme-pill');
-  pills.forEach(p => p.classList.remove('active'));
+        // Ambil Mapel (Checkboxes + Dynamic Inputs)
+        const mapelBase = getCheckedValues('chk_mapel');
+        const mapelExtra = Array.from(document.querySelectorAll('#dynamic_mapel input')).map(i => i.value.trim()).filter(Boolean);
+        const mapelFinal = [...mapelBase, ...mapelExtra].join(', ') || '-';
 
-  const allThemes = ['theme-lintas-mapel','theme-7-kebiasaan','theme-lainnya'];
-  allThemes.forEach(t => document.getElementById(t).style.display = 'none');
+        return {
+            satuan: document.getElementById('nama_satuan').value || '-',
+            identitas: document.getElementById('identitas').value || '-',
+            jenjang: document.getElementById('jenjang').value || '-',
+            tujuan: document.getElementById('tujuan').value || '-',
+            fase: document.getElementById('fase').value || '-',
+            tema: temaFinal,
+            dimensi: getCheckedValues('chk_dimensi').join(', ') || '-',
+            pendekatan: pendekatanFinal || '-',
+            fokus: document.getElementById('fokus').value || '-',
+            lingkungan: getCheckedValues('chk_lingkungan').join(', ') || '-',
+            waktu: document.getElementById('waktu').value || '-',
+            sesi: document.getElementById('sesi').value || '-',
+            mapel: mapelFinal,
+            tanggal: new Date().toLocaleDateString('id-ID', {day:'numeric', month:'short', year:'numeric'})
+        };
+    }
 
-  if (theme === 'lintas-mapel') {
-    document.getElementById('pill-lintasmapel').classList.add('active');
-    document.getElementById('theme-lintas-mapel').style.display = 'block';
-  } else if (theme === '7-kebiasaan') {
-    document.getElementById('pill-7kebiasaan').classList.add('active');
-    document.getElementById('theme-7-kebiasaan').style.display = 'block';
-  } else if (theme === 'lainnya') {
-    document.getElementById('pill-lainnya').classList.add('active');
-    document.getElementById('theme-lainnya').style.display = 'block';
-  }
-}
+    // ==========================================
+    // 5. PDF GENERATION (TEKNIK KLONING ANTI-BLANK)
+    // ==========================================
+    function processData(isDownloadPdf) {
+        const data = getFormData();
+        
+        // Validasi minimal
+        if(data.satuan === '-') {
+            alert('Mohon isi Nama Satuan Pendidikan terlebih dahulu!');
+            document.getElementById('nama_satuan').focus();
+            return;
+        }
 
-function handlePendekatanChange() {
-  const val = document.getElementById('pendekatan').value;
-  document.getElementById('pendekatan-lainnya').style.display = val === 'Lainnya' ? 'block' : 'none';
-}
+        // Simpan ke History
+        historyData.unshift(data);
+        localStorage.setItem('modulHistory', JSON.stringify(historyData));
+        renderHistory();
 
-// ============================
-// DYNAMIC MAPEL INPUT
-// ============================
-let mapelCount = 0;
-function addMapelInput() {
-  mapelCount++;
-  const wrap = document.getElementById('mapel-tambahan-wrap');
-  const div = document.createElement('div');
-  div.style.cssText = 'display:flex;gap:8px;margin-bottom:8px;';
-  div.id = `mapel-extra-${mapelCount}`;
-  div.innerHTML = `
-    <input type="text" placeholder="Nama mata pelajaran lain..." style="flex:1;">
-    <button onclick="document.getElementById('mapel-extra-${mapelCount}').remove()" style="padding:8px 12px;border:1.5px solid #fca5a5;border-radius:8px;background:white;color:#ef4444;cursor:pointer;font-size:0.8rem;font-weight:600;font-family:'Plus Jakarta Sans',sans-serif;">✕</button>
-  `;
-  wrap.appendChild(div);
-}
+        if(!isDownloadPdf) {
+            showToast('Tersimpan di Riwayat!');
+            return;
+        }
 
-// ============================
-// COLLECT FORM DATA
-// ============================
-function getChecked(containerId) {
-  return Array.from(document.querySelectorAll(`#${containerId} .checkbox-item.checked`))
-    .map(el => el.querySelector('input').value);
-}
+        // --- PROSES PDF ---
+        document.getElementById('loading').classList.replace('hidden', 'flex');
+        document.getElementById('pdf-date').innerText = new Date().toLocaleString('id-ID');
 
-function getExtraMapel() {
-  return Array.from(document.querySelectorAll('#mapel-tambahan-wrap input'))
-    .map(i => i.value.trim()).filter(Boolean);
-}
+        // Susun HTML untuk PDF
+        const pdfTable = document.getElementById('pdf-content-body');
+        pdfTable.innerHTML = createPdfSection('1. Informasi Dasar', [
+            ['Satuan Pendidikan', data.satuan],
+            ['Tingkat / Jenjang', `${data.identitas} - ${data.jenjang}`],
+            ['Fase Belajar', data.fase],
+            ['Tujuan', data.tujuan]
+        ]) + 
+        createPdfSection('2. Konteks & Dimensi', [
+            ['Tema Kokurikuler', data.tema],
+            ['Dimensi Profil', data.dimensi]
+        ]) +
+        createPdfSection('3. Pedagogik & Pelaksanaan', [
+            ['Pendekatan', data.pendekatan],
+            ['Fokus Pembelajaran', data.fokus],
+            ['Kondisi Lingkungan', data.lingkungan],
+            ['Alokasi Waktu', `${data.waktu} (Total ${data.sesi} Sesi)`]
+        ]) +
+        createPdfSection('4. Integrasi', [
+            ['Mata Pelajaran', data.mapel]
+        ]);
 
-function collectData() {
-  let tema = '';
-  if (selectedTheme === 'lintas-mapel') {
-    const subs = getChecked('cl-lintas-mapel');
-    tema = 'Lintas Mapel' + (subs.length ? ': ' + subs.join(', ') : '');
-  } else if (selectedTheme === '7-kebiasaan') {
-    const subs = getChecked('cl-7kebiasaan');
-    tema = '7 Kebiasaan Anak Indonesia Hebat' + (subs.length ? ': ' + subs.join(', ') : '');
-  } else if (selectedTheme === 'lainnya') {
-    tema = 'Lainnya: ' + (document.getElementById('tema-lainnya-input').value || '-');
-  }
+        // TEKNIK KLONING (Solusi Tuntas Bug Kertas Kosong)
+        const originalEl = document.getElementById('pdf-template');
+        originalEl.style.display = 'block'; // Tampilkan sekejap untuk dicopy
+        
+        const cloneEl = originalEl.cloneNode(true); // Copy seluruh isi
+        originalEl.style.display = 'none'; // Sembunyikan aslinya lagi
 
-  const pendekatan = document.getElementById('pendekatan').value === 'Lainnya'
-    ? document.getElementById('pendekatan-lainnya-input').value || 'Lainnya'
-    : document.getElementById('pendekatan').value;
+        // Taruh copy-an di absolute 0,0 di luar layar
+        cloneEl.style.position = 'absolute';
+        cloneEl.style.top = '0';
+        cloneEl.style.left = '0';
+        cloneEl.style.zIndex = '-9999';
+        document.body.appendChild(cloneEl);
 
-  const allMapel = [...getChecked('cl-mapel'), ...getExtraMapel()];
+        const opt = {
+            margin: 15, // Margin PDF (mm)
+            filename: `Modul_${data.satuan.replace(/\s+/g,'_')}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true, logging: false },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
 
-  return {
-    identitas: document.getElementById('identitas').value || '-',
-    tujuan: document.getElementById('tujuan').value || '-',
-    jenjang: document.getElementById('jenjang').value || '-',
-    fase: document.getElementById('fase').value || '-',
-    namaSatuan: document.getElementById('namaSatuan').value || '-',
-    tema: tema || '-',
-    dimensi: getChecked('cl-dimensi').join(', ') || '-',
-    pendekatan: pendekatan || '-',
-    fokus: document.getElementById('fokus').value || '-',
-    lingkungan: getChecked('cl-lingkungan').join(', ') || '-',
-    alokasiWaktu: document.getElementById('alokasi-waktu').value || '-',
-    pertemuan: document.getElementById('pertemuan').value || '-',
-    mapel: allMapel.join(', ') || '-',
-    savedAt: new Date().toLocaleString('id-ID')
-  };
-}
+        // Render PDF dari elemen Kloning
+        setTimeout(() => {
+            html2pdf().set(opt).from(cloneEl).save().then(() => {
+                document.body.removeChild(cloneEl); // Buang copy-an
+                document.getElementById('loading').classList.replace('flex', 'hidden');
+                showToast('PDF Berhasil Diunduh!');
+            }).catch(err => {
+                console.error(err);
+                document.body.removeChild(cloneEl);
+                document.getElementById('loading').classList.replace('flex', 'hidden');
+                alert('Gagal mengekspor PDF.');
+            });
+        }, 300);
+    }
 
-// ============================
-// PDF GENERATION (FIXED BLANK BUG)
-// ============================
-// ============================
-// PDF GENERATION (TRIK SULAP UI - 100% AMPUH)
-// ============================
-function generatePDF() {
-  const data = collectData();
-  buildPDFContent(data);
-  document.getElementById('pdf-date').textContent = new Date().toLocaleString('id-ID');
+    function createPdfSection(title, rows) {
+        let rowsHtml = rows.map((r, i) => `
+            <div class="flex border-b border-slate-200 ${i % 2 === 0 ? 'bg-slate-50' : 'bg-white'}">
+                <div class="w-1/3 p-3 text-sm font-semibold text-slate-700 border-r border-slate-200">${r[0]}</div>
+                <div class="w-2/3 p-3 text-sm text-slate-800">${r[1]}</div>
+            </div>
+        `).join('');
 
-  const loading = document.getElementById('loading');
-  loading.classList.add('show');
+        return `
+        <div class="mb-6 rounded-lg border border-slate-300 overflow-hidden page-break-inside-avoid">
+            <div class="bg-slate-800 text-white px-4 py-2 text-sm font-bold">${title}</div>
+            <div>${rowsHtml}</div>
+        </div>`;
+    }
 
-  const el = document.getElementById('pdf-content');
-  
-  // 1. Simpan posisi scroll pengguna
-  const currentScroll = window.scrollY;
+    // ==========================================
+    // 6. RIWAYAT & NAVIGASI UI
+    // ==========================================
+    function renderHistory() {
+        const tbody = document.getElementById('table-history');
+        const emptyState = document.getElementById('empty-history');
+        document.getElementById('badge-count').innerText = historyData.length;
 
-  // 2. KUNCI UTAMA: Gulir paksa ke atas secara INSTAN (tanpa animasi)
-  // Ini memastikan mesin PDF memotret dari titik awal koordinat (Y=0)
-  window.scrollTo({ top: 0, behavior: 'instant' });
+        if(historyData.length === 0) {
+            tbody.innerHTML = '';
+            emptyState.style.display = 'block';
+            return;
+        }
 
-  // 3. Tampilkan elemen PDF dengan ukuran dan posisi mutlak
-  el.style.display = 'block';
-  el.style.position = 'absolute';
-  el.style.top = '0';
-  el.style.left = '0';
-  el.style.width = '800px'; // Paksa lebar 800px agar layout PDF stabil
-  el.style.backgroundColor = '#ffffff';
-  el.style.zIndex = '50'; // Berada di bawah loading overlay (z-index: 100)
+        emptyState.style.display = 'none';
+        tbody.innerHTML = historyData.map((d, i) => `
+            <tr class="hover:bg-slate-50 transition-colors">
+                <td class="p-4 font-medium text-slate-900">${d.satuan}</td>
+                <td class="p-4"><span class="bg-blue-100 text-blue-700 py-1 px-2 rounded text-xs font-semibold">${d.jenjang}</span></td>
+                <td class="p-4 text-xs text-slate-500">${d.tanggal}</td>
+                <td class="p-4 text-right">
+                    <button onclick="hapusRiwayat(${i})" class="text-xs font-semibold text-red-500 border border-red-200 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors">Hapus</button>
+                </td>
+            </tr>
+        `).join('');
+    }
 
-  const opt = {
-    margin: [10, 10, 10, 10],
-    filename: `Modul-Kokurikuler-${data.namaSatuan.replace(/\s+/g,'-')}.pdf`,
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { 
-      scale: 2, 
-      useCORS: true, 
-      logging: false,
-      scrollY: 0,
-      windowWidth: 800 // Paksa kanvas membaca lebar 800px
-    },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-  };
+    function hapusRiwayat(index) {
+        if(confirm('Yakin ingin menghapus riwayat ini?')) {
+            historyData.splice(index, 1);
+            localStorage.setItem('modulHistory', JSON.stringify(historyData));
+            renderHistory();
+        }
+    }
 
-  // 4. Beri jeda 600ms agar browser selesai melukis layout HTML sebelum difoto
-  setTimeout(() => {
-    html2pdf().set(opt).from(el).save().then(() => {
-      // 5. Bersihkan penampung, sembunyikan kembali, dan kembalikan posisi layar
-      el.style.display = 'none';
-      el.style.position = 'static';
-      el.style.zIndex = 'auto';
-      
-      // Kembalikan layar persis ke titik saat tombol "Unduh" diklik
-      window.scrollTo({ top: currentScroll, behavior: 'instant' });
-      
-      loading.classList.remove('show');
-      showToast('PDF berhasil diunduh!');
-    }).catch((err) => {
-      console.error("Error PDF: ", err);
-      el.style.display = 'none';
-      el.style.position = 'static';
-      window.scrollTo({ top: currentScroll, behavior: 'instant' });
-      loading.classList.remove('show');
-      showToast('Gagal membuat PDF. Coba lagi.');
-    });
-  }, 600); 
-}
+    function resetForm() {
+        if(!confirm('Reset semua isian formulir?')) return;
+        document.querySelectorAll('input[type="text"], input[type="number"], select').forEach(el => el.value = '');
+        document.querySelectorAll('input[type="checkbox"]').forEach(el => el.checked = false);
+        document.getElementById('dynamic_mapel').innerHTML = '';
+        updateJenjang();
+        updateTemaUI();
+        togglePendekatanLainnya();
+        window.scrollTo({top: 0, behavior: 'smooth'});
+    }
 
-function buildPDFContent(data) {
-  const sections = [
-    { title: '1. Identitas & Tujuan', rows: [
-      ['Identitas Satuan Pendidikan', data.identitas],
-      ['Tujuan Penggunaan', data.tujuan],
-      ['Jenjang Sekolah', data.jenjang],
-      ['Fase Belajar', data.fase],
-      ['Nama Satuan Pendidikan', data.namaSatuan],
-    ]},
-    { title: '2. Konteks Pengembangan Kokurikuler', rows: [
-      ['Pilih Tema', data.tema],
-    ]},
-    { title: '3. Target Dimensi Profil Lulusan', rows: [
-      ['Dimensi yang Ditargetkan', data.dimensi],
-    ]},
-    { title: '4. Praktik Pedagogik', rows: [
-      ['Pendekatan Belajar', data.pendekatan],
-      ['Fokus Pengalaman Belajar', data.fokus],
-      ['Kondisi Lingkungan', data.lingkungan],
-      ['Alokasi Waktu', data.alokasiWaktu],
-      ['Jumlah Pertemuan', data.pertemuan + (data.pertemuan !== '-' ? ' sesi' : '')],
-    ]},
-    { title: '5. Integrasi Mata Pelajaran', rows: [
-      ['Mata Pelajaran Terintegrasi', data.mapel],
-    ]},
-  ];
+    function switchTab(tabId, btnElement) {
+        // Toggle view
+        ['buat-modul', 'riwayat', 'pengaturan'].forEach(id => {
+            document.getElementById(`view-${id}`).classList.add('hidden');
+        });
+        document.getElementById(`view-${tabId}`).classList.remove('hidden');
 
-  const html = sections.map(s => `
-    <div style="margin-bottom:20px;break-inside:avoid;">
-      <div style="background:#0f2550;color:white;padding:8px 14px;border-radius:8px 8px 0 0;font-size:0.85rem;font-weight:700;">${s.title}</div>
-      <div style="border:1px solid #e2e8f0;border-top:none;border-radius:0 0 8px 8px;overflow:hidden;">
-        ${s.rows.map((r,i) => `
-          <div style="display:flex;${i%2===0?'background:#f8fafc;':'background:white;'}">
-            <div style="padding:10px 14px;font-size:0.78rem;font-weight:600;color:#475569;width:220px;flex-shrink:0;border-right:1px solid #e2e8f0;">${r[0]}</div>
-            <div style="padding:10px 14px;font-size:0.82rem;color:#0f172a;flex:1;">${r[1]}</div>
-          </div>
-        `).join('')}
-      </div>
-    </div>
-  `).join('');
+        // Ubah Title topbar
+        const titles = { 'buat-modul': 'Buat Modul Baru', 'riwayat': 'Riwayat Modul', 'pengaturan': 'Pengaturan Profil'};
+        document.getElementById('page-title').innerText = titles[tabId];
 
-  document.getElementById('pdf-body').innerHTML = html;
-}
+        // Active state navigasi
+        document.querySelectorAll('.nav-link').forEach(el => {
+            el.className = "nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white font-medium transition-colors";
+        });
+        btnElement.className = "nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg bg-blue-600 text-white font-medium transition-colors";
 
-// ============================
-// HISTORY
-// ============================
-function saveToHistory() {
-  const data = collectData();
-  if (data.namaSatuan === '-') {
-    showToast('Isi Nama Satuan Pendidikan terlebih dahulu!');
-    return;
-  }
-  historyData.unshift(data);
-  localStorage.setItem('modulHistory', JSON.stringify(historyData));
-  renderHistory();
-  showToast('Modul berhasil disimpan ke riwayat!');
-}
+        // Tutup mobile sidebar jika terbuka
+        const sidebar = document.getElementById('sidebar');
+        if(!sidebar.classList.contains('-translate-x-full')) toggleSidebar();
+    }
 
-function renderHistory() {
-  const tbody = document.getElementById('history-tbody');
-  const empty = document.getElementById('history-empty');
-  const tableWrap = document.getElementById('history-table-wrap');
-  const countBadge = document.getElementById('history-count');
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('mobile-overlay');
+        sidebar.classList.toggle('-translate-x-full');
+        overlay.classList.toggle('active');
+    }
 
-  countBadge.textContent = historyData.length + ' Modul';
-
-  if (historyData.length === 0) {
-    empty.style.display = 'block';
-    tableWrap.style.display = 'none';
-    return;
-  }
-
-  empty.style.display = 'none';
-  tableWrap.style.display = 'block';
-
-  tbody.innerHTML = historyData.map((d, i) => `
-    <tr>
-      <td><span style="font-weight:600;color:var(--navy);">${d.namaSatuan}</span></td>
-      <td><span class="badge badge-blue">${d.jenjang}</span></td>
-      <td>${d.tujuan}</td>
-      <td style="font-size:0.78rem;color:var(--text-soft);">${d.savedAt}</td>
-      <td>
-        <button onclick="deleteHistory(${i})" style="padding:5px 10px;font-size:0.75rem;font-weight:600;border:1px solid #fca5a5;border-radius:6px;background:white;color:#ef4444;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;">Hapus</button>
-      </td>
-    </tr>
-  `).join('');
-}
-
-function deleteHistory(idx) {
-  historyData.splice(idx, 1);
-  localStorage.setItem('modulHistory', JSON.stringify(historyData));
-  renderHistory();
-  showToast('Entri dihapus.');
-}
-
-// ============================
-// PAGE NAVIGATION
-// ============================
-function showPage(page) {
-  document.querySelectorAll('.page-view').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('#sidebar nav a').forEach(a => a.classList.remove('active'));
-
-  document.getElementById('page-' + page).classList.add('active');
-
-  const titleMap = {
-    'buat-modul': ['Buat Modul Baru', 'Isi formulir berikut untuk menyusun modul kokurikuler digital'],
-    'riwayat': ['Riwayat Modul', 'Daftar semua modul yang pernah disimpan'],
-    'pengaturan': ['Pengaturan Profil', 'Kelola informasi akun dan preferensi Anda']
-  };
-
-  if (titleMap[page]) {
-    document.getElementById('page-title').textContent = titleMap[page][0];
-    document.getElementById('page-subtitle').textContent = titleMap[page][1];
-  }
-
-  const links = document.querySelectorAll('#sidebar nav a');
-  const linkMap = { 'buat-modul': 0, 'riwayat': 1, 'pengaturan': 2 };
-  if (linkMap[page] !== undefined) links[linkMap[page]].classList.add('active');
-
-  // Tutup sidebar otomatis di mode mobile setelah klik menu
-  if (window.innerWidth <= 768) {
-    toggleSidebar();
-  }
-}
-
-// ============================
-// RESET
-// ============================
-function resetForm() {
-  if (!confirm('Reset semua isian formulir? Tindakan ini tidak dapat dibatalkan.')) return;
-
-  document.getElementById('identitas').value = '';
-  document.getElementById('tujuan').value = '';
-  document.getElementById('jenjang').innerHTML = '<option value="">— Pilih Identitas Dulu —</option>';
-  document.getElementById('fase').value = '';
-  document.getElementById('namaSatuan').value = '';
-  document.getElementById('pendekatan').value = '';
-  document.getElementById('fokus').value = '';
-  document.getElementById('alokasi-waktu').value = '';
-  document.getElementById('pertemuan').value = '';
-  document.getElementById('tema-lainnya-input').value = '';
-  document.getElementById('pendekatan-lainnya-input').value = '';
-  document.getElementById('pendekatan-lainnya').style.display = 'none';
-
-  document.querySelectorAll('.checkbox-item.checked').forEach(el => {
-    el.classList.remove('checked');
-    el.querySelector('input').checked = false;
-  });
-
-  selectedTheme = null;
-  document.querySelectorAll('.theme-pill').forEach(p => p.classList.remove('active'));
-  ['theme-lintas-mapel','theme-7-kebiasaan','theme-lainnya'].forEach(t => {
-    document.getElementById(t).style.display = 'none';
-  });
-
-  document.getElementById('mapel-tambahan-wrap').innerHTML = '';
-  mapelCount = 0;
-
-  showToast('Formulir berhasil di-reset.');
-}
-
-// ============================
-// TOAST
-// ============================
-function showToast(msg) {
-  const toast = document.getElementById('toast');
-  document.getElementById('toast-msg').textContent = msg;
-  toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 3000);
-}
-
-// ============================
-// BOOT
-// ============================
-init();
+    function showToast(msg) {
+        const toast = document.getElementById('toast');
+        document.getElementById('toast-msg').innerText = msg;
+        toast.classList.remove('translate-y-20', 'opacity-0');
+        setTimeout(() => {
+            toast.classList.add('translate-y-20', 'opacity-0');
+        }, 3000);
+    }
 </script>
 </body>
 </html>
