@@ -250,6 +250,7 @@
       background: white;
     }
 
+    /* POSISI IKON CENTANG SUDAH DIPERBAIKI */
     .check-box::after {
       content: ''; position: absolute; left: 5px; top: 1px;
       width: 5px; height: 9px;
@@ -851,6 +852,7 @@ function init() {
   renderHistory();
 }
 
+// FUNGSI CENTANG SUDAH DIPERBAIKI (ONCHANGE)
 function buildCheckboxGroup(containerId, items) {
   const container = document.getElementById(containerId);
   container.innerHTML = items.map(item => `
@@ -980,7 +982,7 @@ function collectData() {
 }
 
 // ============================
-// PDF GENERATION
+// PDF GENERATION (SUDAH DIPERBAIKI DENGAN ABSOLUTE & SCROLL 0)
 // ============================
 function generatePDF() {
   const data = collectData();
