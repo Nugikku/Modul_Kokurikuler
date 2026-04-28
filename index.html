@@ -251,7 +251,7 @@
     }
 
     .check-box::after {
-      content: ''; position: absolute; left: 3px; top: 0px;
+      content: ''; position: absolute; left: 5px; top: 1px;
       width: 5px; height: 9px;
       border: 2px solid white; border-top: none; border-left: none;
       transform: rotate(45deg); opacity: 0; transition: opacity 0.15s;
@@ -854,17 +854,12 @@ function init() {
 function buildCheckboxGroup(containerId, items) {
   const container = document.getElementById(containerId);
   container.innerHTML = items.map(item => `
-    <label class="checkbox-item" onclick="toggleCheck(this)">
-      <input type="checkbox" value="${item}">
+    <label class="checkbox-item">
+      <input type="checkbox" value="${item}" onchange="this.parentElement.classList.toggle('checked', this.checked)">
       <span class="check-box"></span>
       <span>${item}</span>
     </label>
   `).join('');
-}
-
-function toggleCheck(el) {
-  el.classList.toggle('checked');
-  el.querySelector('input').checked = el.classList.contains('checked');
 }
 
 // ============================
