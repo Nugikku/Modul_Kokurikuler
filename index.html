@@ -988,54 +988,60 @@ function generatePDF() {
   const loading = document.getElementById('loading');
   loading.classList.add('show');
 
-  // Ambil elemen utama
-  const mainElement = document.getElementById('main');
-  const sidebarElement = document.getElementById('sidebar');
-  const pdfElement = document.getElementById('pdf-content');
-
-  // 1. Simpan posisi scroll pengguna saat ini
+  const el = document.getElementById('pdf-content');
+  
+  // 1. Simpan posisi scroll pengguna
   const currentScroll = window.scrollY;
 
-  // 2. FOOLPROOF HACK: Sembunyikan UI utama sementara!
-  // Ini memaksa browser menganggap halaman hanya berisi kertas PDF.
-  // Otomatis koordinat reset ke atas (0,0) sehingga mustahil blank.
-  mainElement.style.display = 'none';
-  sidebarElement.style.display = 'none';
-  pdfElement.style.display = 'block';
+  // 2. KUNCI UTAMA: Gulir paksa ke atas secara INSTAN (tanpa animasi)
+  // Ini memastikan mesin PDF memotret dari titik awal koordinat (Y=0)
+  window.scrollTo({ top: 0, behavior: 'instant' });
+
+  // 3. Tampilkan elemen PDF dengan ukuran dan posisi mutlak
+  el.style.display = 'block';
+  el.style.position = 'absolute';
+  el.style.top = '0';
+  el.style.left = '0';
+  el.style.width = '800px'; // Paksa lebar 800px agar layout PDF stabil
+  el.style.backgroundColor = '#ffffff';
+  el.style.zIndex = '50'; // Berada di bawah loading overlay (z-index: 100)
 
   const opt = {
     margin: [10, 10, 10, 10],
     filename: `Modul-Kokurikuler-${data.namaSatuan.replace(/\s+/g,'-')}.pdf`,
     image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true, logging: false },
+    html2canvas: { 
+      scale: 2, 
+      useCORS: true, 
+      logging: false,
+      scrollY: 0,
+      windowWidth: 800 // Paksa kanvas membaca lebar 800px
+    },
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
   };
 
-  // 3. Beri waktu 500ms agar browser me-render kertas PDF sebelum dipotret
+  // 4. Beri jeda 600ms agar browser selesai melukis layout HTML sebelum difoto
   setTimeout(() => {
-    html2pdf().set(opt).from(pdfElement).save().then(() => {
-      // 4. KEMBALIKAN SEMUA KE TAMPILAN AWAL
-      pdfElement.style.display = 'none';
-      mainElement.style.display = ''; 
-      sidebarElement.style.display = '';
+    html2pdf().set(opt).from(el).save().then(() => {
+      // 5. Bersihkan penampung, sembunyikan kembali, dan kembalikan posisi layar
+      el.style.display = 'none';
+      el.style.position = 'static';
+      el.style.zIndex = 'auto';
       
-      // 5. Kembalikan layar persis ke posisi pengguna terakhir kali
-      window.scrollTo(0, currentScroll);
+      // Kembalikan layar persis ke titik saat tombol "Unduh" diklik
+      window.scrollTo({ top: currentScroll, behavior: 'instant' });
       
       loading.classList.remove('show');
       showToast('PDF berhasil diunduh!');
     }).catch((err) => {
       console.error("Error PDF: ", err);
-      // Jika error, tetap kembalikan UI seperti semula
-      pdfElement.style.display = 'none';
-      mainElement.style.display = '';
-      sidebarElement.style.display = '';
-      window.scrollTo(0, currentScroll);
-      
+      el.style.display = 'none';
+      el.style.position = 'static';
+      window.scrollTo({ top: currentScroll, behavior: 'instant' });
       loading.classList.remove('show');
       showToast('Gagal membuat PDF. Coba lagi.');
     });
-  }, 500); 
+  }, 600); 
 }
 
 function buildPDFContent(data) {
