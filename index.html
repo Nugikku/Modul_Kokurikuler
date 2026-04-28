@@ -250,7 +250,7 @@
       background: white;
     }
 
-    /* POSISI IKON CENTANG SUDAH DIPERBAIKI */
+    /* POSISI IKON CENTANG */
     .check-box::after {
       content: ''; position: absolute; left: 5px; top: 1px;
       width: 5px; height: 9px;
@@ -495,11 +495,7 @@
       <div class="topbar-actions" style="display:flex;align-items:center;gap:10px;">
         <button class="btn-secondary" style="padding:8px 16px;font-size:0.8rem;" onclick="resetForm()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12a9 9 0 109-9M3 3v6h6"/></svg>
-          <span>Reset</span>
-        </button>
-        <button class="btn-accent" style="padding:8px 16px;font-size:0.8rem;" onclick="generatePDF()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          <span>Simpan PDF</span>
+          <span>Reset Formulir</span>
         </button>
       </div>
     </div>
@@ -683,10 +679,7 @@
       </div>
 
       <div class="action-row">
-        <button class="btn-secondary" onclick="resetForm()">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 109-9M3 3v6h6"/></svg>
-          Reset Formulir
-        </button>
+        <div style="flex-grow: 1;"></div> 
         <div class="btn-group">
           <button class="btn-secondary" onclick="saveToHistory()">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
@@ -852,7 +845,7 @@ function init() {
   renderHistory();
 }
 
-// FUNGSI CENTANG SUDAH DIPERBAIKI (ONCHANGE)
+// FUNGSI CENTANG 
 function buildCheckboxGroup(containerId, items) {
   const container = document.getElementById(containerId);
   container.innerHTML = items.map(item => `
@@ -982,7 +975,7 @@ function collectData() {
 }
 
 // ============================
-// PDF GENERATION (SUDAH DIPERBAIKI DENGAN ABSOLUTE & SCROLL 0)
+// PDF GENERATION (FIXED BLANK BUG)
 // ============================
 function generatePDF() {
   const data = collectData();
@@ -994,12 +987,20 @@ function generatePDF() {
 
   const el = document.getElementById('pdf-content');
   
-  // PERBAIKAN: Paksa elemen ke koordinat 0,0 agar tidak terpengaruh scroll
+  // Simpan posisi scroll saat ini
+  const currentScroll = window.scrollY;
+  
+  // Paksa pindah ke atas untuk menghindari blank
+  window.scrollTo(0, 0);
+
+  // Setel posisi layout PDF agar stabil
   el.style.display = 'block';
   el.style.position = 'absolute';
   el.style.top = '0';
   el.style.left = '0';
-  el.style.zIndex = '-10'; // Sembunyikan di belakang layar
+  el.style.width = '100%';
+  el.style.zIndex = '50';
+  el.style.backgroundColor = '#ffffff';
 
   const opt = {
     margin: [10, 10, 10, 10],
@@ -1009,29 +1010,31 @@ function generatePDF() {
       scale: 2, 
       useCORS: true, 
       logging: false,
-      scrollY: 0, // Paksa tangkapan layar dimulai dari sumbu Y teratas
-      windowWidth: document.documentElement.offsetWidth
+      scrollY: 0 
     },
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
   };
 
-  // PERBAIKAN: Beri jeda 300ms agar browser selesai me-render DOM sebelum dijadikan PDF
+  // Tunggu 500ms agar browser selesai render form di atas
   setTimeout(() => {
     html2pdf().set(opt).from(el).save().then(() => {
-      // Kembalikan style seperti semula setelah selesai
+      // Kembalikan ke posisi semula
       el.style.display = 'none';
       el.style.position = 'static';
+      el.style.zIndex = 'auto';
+      window.scrollTo(0, currentScroll);
       
       loading.classList.remove('show');
       showToast('PDF berhasil diunduh!');
     }).catch((err) => {
-      console.error("PDF Error: ", err);
+      console.error("Error PDF: ", err);
       el.style.display = 'none';
       el.style.position = 'static';
+      window.scrollTo(0, currentScroll);
       loading.classList.remove('show');
       showToast('Gagal membuat PDF. Coba lagi.');
     });
-  }, 300);
+  }, 500); 
 }
 
 function buildPDFContent(data) {
