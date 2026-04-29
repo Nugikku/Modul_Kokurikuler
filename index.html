@@ -5,103 +5,145 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistem Penyusun Modul Kokurikuler</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
+        * { font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: #f0f4f8; }
+        ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        /* Sidebar Mobile Overlay */
+
         .sidebar-overlay { display: none; }
         .sidebar-overlay.active { display: block; }
-        /* Smooth transitions */
-        .transition-all-300 { transition: all 0.3s ease; }
+        .nav-link { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 10px; font-weight: 500; font-size: 14px; transition: all 0.2s; color: #94a3b8; }
+        .nav-link:hover { background: rgba(255,255,255,0.07); color: white; }
+        .nav-link.active { background: linear-gradient(135deg, #3b82f6, #6366f1); color: white; box-shadow: 0 4px 14px rgba(99,102,241,0.4); }
+
+        .card { background: white; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+        .section-header { background: linear-gradient(135deg, #f8fafc, #f1f5f9); border-bottom: 1px solid #e2e8f0; padding: 16px 24px; display: flex; align-items: center; gap: 12px; }
+        .section-badge { background: linear-gradient(135deg, #3b82f6, #6366f1); color: white; width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+        
+        .form-input { width: 100%; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 10px 14px; font-size: 14px; outline: none; transition: all 0.2s; background: #fafafa; color: #1e293b; }
+        .form-input:focus { border-color: #6366f1; background: white; box-shadow: 0 0 0 3px rgba(99,102,241,0.12); }
+        
+        .chk-label { display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px; border: 1.5px solid #e2e8f0; border-radius: 10px; cursor: pointer; transition: all 0.2s; font-size: 13px; color: #475569; }
+        .chk-label:hover { border-color: #a5b4fc; background: #f5f3ff; }
+        .chk-label input:checked ~ span { color: #1e293b; font-weight: 600; }
+        .chk-label:has(input:checked) { border-color: #6366f1; background: #f5f3ff; }
+
+        /* Modal */
+        #modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.7); z-index: 200; display: none; align-items: center; justify-content: center; padding: 16px; backdrop-filter: blur(4px); }
+        #modal-overlay.show { display: flex; }
+        #modal-box { background: white; border-radius: 20px; width: 100%; max-width: 760px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 25px 60px rgba(0,0,0,0.25); animation: modalIn 0.3s ease; }
+        @keyframes modalIn { from { opacity:0; transform: scale(0.94) translateY(10px); } to { opacity:1; transform: scale(1) translateY(0); } }
+        
+        .preview-row { display: flex; border-bottom: 1px solid #f1f5f9; }
+        .preview-row:last-child { border-bottom: none; }
+        .preview-row:nth-child(odd) { background: #f8fafc; }
+        .preview-key { width: 38%; padding: 10px 16px; font-size: 13px; font-weight: 600; color: #475569; border-right: 1px solid #e2e8f0; }
+        .preview-val { width: 62%; padding: 10px 16px; font-size: 13px; color: #1e293b; line-height: 1.5; }
+        .preview-section-title { background: linear-gradient(135deg, #1e293b, #334155); color: white; padding: 8px 16px; font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+
+        /* Toast */
+        #toast { position: fixed; bottom: 24px; right: 24px; background: #1e293b; color: white; padding: 12px 20px; border-radius: 12px; font-size: 14px; font-weight: 500; z-index: 300; transform: translateY(20px); opacity: 0; transition: all 0.3s; display: flex; align-items: center; gap: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
+        #toast.show { transform: translateY(0); opacity: 1; }
+
+        /* Loading */
+        #loading-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.85); z-index: 400; display: none; align-items: center; justify-content: center; flex-direction: column; gap: 16px; backdrop-filter: blur(4px); }
+        #loading-overlay.show { display: flex; }
+        .spinner { width: 44px; height: 44px; border: 4px solid rgba(255,255,255,0.15); border-top-color: #6366f1; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* PDF Print Styles */
+        @media print {
+            body * { visibility: hidden !important; }
+            #print-area, #print-area * { visibility: visible !important; }
+            #print-area { position: fixed; left: 0; top: 0; width: 100%; }
+        }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden text-slate-800">
 
-    <div id="mobile-overlay" class="sidebar-overlay fixed inset-0 bg-slate-900/50 z-40 lg:hidden" onclick="toggleSidebar()"></div>
+    <!-- Overlay Mobile -->
+    <div id="mobile-overlay" class="sidebar-overlay fixed inset-0 bg-slate-900/60 z-40 lg:hidden" onclick="toggleSidebar()"></div>
 
-    <aside id="sidebar" class="bg-slate-900 text-white w-64 flex-shrink-0 flex flex-col fixed inset-y-0 left-0 transform -translate-x-full lg:relative lg:translate-x-0 transition-transform duration-300 z-50">
-        <div class="p-6 border-b border-slate-800 flex items-center justify-between">
+    <!-- SIDEBAR -->
+    <aside id="sidebar" class="w-64 flex-shrink-0 flex flex-col fixed inset-y-0 left-0 transform -translate-x-full lg:relative lg:translate-x-0 transition-transform duration-300 z-50" style="background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);">
+        <div class="p-6 border-b border-white/10 flex items-center justify-between">
             <div>
-                <h1 class="text-lg font-bold text-blue-400">ModulKu<span class="text-white">.app</span></h1>
-                <p class="text-xs text-slate-400 mt-1">Kokurikuler Digital</p>
+                <h1 class="text-lg font-bold" style="color:#818cf8;">ModulKu<span class="text-white">.app</span></h1>
+                <p class="text-xs mt-1" style="color:#64748b;">Kokurikuler Digital</p>
             </div>
             <button class="lg:hidden text-slate-400 hover:text-white" onclick="toggleSidebar()">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
         </div>
-        
-        <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
-            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 px-3">Menu Utama</p>
-            <a href="#" onclick="switchTab('buat-modul', this)" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg bg-blue-600 text-white font-medium transition-colors">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+        <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
+            <p class="text-xs font-bold uppercase tracking-widest mb-3 px-3" style="color:#475569;">Menu Utama</p>
+            <a href="#" onclick="switchTab('buat-modul', this)" class="nav-link active">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                 Buat Modul Baru
             </a>
-            <a href="#" onclick="switchTab('riwayat', this)" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white font-medium transition-colors">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            <a href="#" onclick="switchTab('riwayat', this)" class="nav-link">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                 Riwayat Modul
             </a>
-            <a href="#" onclick="switchTab('pengaturan', this)" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white font-medium transition-colors">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            <a href="#" onclick="switchTab('pengaturan', this)" class="nav-link">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                 Pengaturan Profil
             </a>
         </nav>
-        
-        <div class="p-4 border-t border-slate-800">
-            <div class="flex items-center gap-3 px-3 py-2 bg-slate-800 rounded-lg">
-                <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">G</div>
+        <div class="p-4 border-t border-white/10">
+            <div class="flex items-center gap-3 px-3 py-2.5 rounded-xl" style="background:rgba(255,255,255,0.06);">
+                <div class="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0" style="background: linear-gradient(135deg,#6366f1,#8b5cf6);">G</div>
                 <div>
-                    <p class="text-sm font-medium text-white">Guru Pengampu</p>
-                    <p class="text-xs text-slate-400">Administrator</p>
+                    <p class="text-sm font-semibold text-white">Guru Pengampu</p>
+                    <p class="text-xs" style="color:#64748b;">Administrator</p>
                 </div>
             </div>
         </div>
     </aside>
 
-    <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
-        
-        <header class="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-4 sm:px-8 flex-shrink-0">
-            <div class="flex items-center gap-4">
+    <!-- MAIN -->
+    <main class="flex-1 flex flex-col h-screen overflow-hidden">
+        <header class="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-4 sm:px-8 flex-shrink-0" style="box-shadow: 0 1px 0 #e2e8f0;">
+            <div class="flex items-center gap-3">
                 <button class="lg:hidden text-slate-500 hover:text-slate-700" onclick="toggleSidebar()">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
                 </button>
-                <h2 id="page-title" class="text-lg font-bold text-slate-800">Buat Modul Baru</h2>
+                <h2 id="page-title" class="text-base font-bold text-slate-800">Buat Modul Baru</h2>
             </div>
-            <button onclick="resetForm()" class="text-sm text-slate-500 hover:text-red-600 font-medium flex items-center gap-1">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+            <button onclick="resetForm()" class="text-sm text-slate-400 hover:text-red-500 font-medium flex items-center gap-1.5 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                 <span class="hidden sm:inline">Reset Form</span>
             </button>
         </header>
 
-        <div class="flex-1 overflow-y-auto p-4 sm:p-8">
-            
-            <div id="view-buat-modul" class="max-w-4xl mx-auto space-y-6 pb-20">
-                <p class="text-slate-500 text-sm mb-6">Isi formulir di bawah ini untuk menyusun dan mengunduh modul kokurikuler Anda.</p>
-                
-                <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                    <div class="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center gap-3">
-                        <span class="bg-blue-600 text-white w-7 h-7 rounded-md flex items-center justify-center text-sm font-bold">1</span>
+        <div class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+
+            <!-- VIEW: BUAT MODUL -->
+            <div id="view-buat-modul" class="max-w-4xl mx-auto space-y-5 pb-10">
+
+                <!-- SEKSI 1 -->
+                <div class="card overflow-hidden">
+                    <div class="section-header">
+                        <span class="section-badge">1</span>
                         <h3 class="font-semibold text-slate-800">Identitas & Tujuan</h3>
                     </div>
-                    <div class="p-6 space-y-5">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div class="p-6 space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-sm font-medium text-slate-700 mb-1">Identitas Satuan Pendidikan</label>
-                                <select id="identitas" onchange="updateJenjang()" class="w-full border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm bg-white">
+                                <label class="block text-sm font-semibold text-slate-600 mb-1.5">Identitas Satuan Pendidikan</label>
+                                <select id="identitas" onchange="updateJenjang()" class="form-input">
                                     <option value="">-- Pilih --</option>
                                     <option value="Sekolah">Sekolah</option>
                                     <option value="Madrasah">Madrasah</option>
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-slate-700 mb-1">Tujuan Penggunaan</label>
-                                <select id="tujuan" class="w-full border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm bg-white">
+                                <label class="block text-sm font-semibold text-slate-600 mb-1.5">Tujuan Penggunaan</label>
+                                <select id="tujuan" class="form-input">
                                     <option value="">-- Pilih --</option>
                                     <option>Modul Kokurikuler</option>
                                     <option>LKS (Lembar Kerja Siswa)</option>
@@ -109,76 +151,76 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-slate-700 mb-1">Jenjang Sekolah</label>
-                                <select id="jenjang" class="w-full border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm bg-slate-50" disabled>
+                                <label class="block text-sm font-semibold text-slate-600 mb-1.5">Jenjang Sekolah</label>
+                                <select id="jenjang" class="form-input bg-slate-50" disabled>
                                     <option value="">Pilih identitas dulu</option>
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-slate-700 mb-1">Fase Belajar</label>
-                                <input type="text" id="fase" placeholder="Contoh: Fase A / Kelas 1" class="w-full border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
+                                <label class="block text-sm font-semibold text-slate-600 mb-1.5">Fase Belajar</label>
+                                <input type="text" id="fase" placeholder="Contoh: Fase A / Kelas 1" class="form-input">
                             </div>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Nama Satuan Pendidikan</label>
-                            <input type="text" id="nama_satuan" placeholder="Contoh: SDN 1 Nusantara" class="w-full border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
+                            <label class="block text-sm font-semibold text-slate-600 mb-1.5">Nama Satuan Pendidikan <span class="text-red-400">*</span></label>
+                            <input type="text" id="nama_satuan" placeholder="Contoh: SDN 1 Nusantara" class="form-input">
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                    <div class="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center gap-3">
-                        <span class="bg-blue-600 text-white w-7 h-7 rounded-md flex items-center justify-center text-sm font-bold">2</span>
+                <!-- SEKSI 2 -->
+                <div class="card overflow-hidden">
+                    <div class="section-header">
+                        <span class="section-badge">2</span>
                         <h3 class="font-semibold text-slate-800">Konteks Pengembangan</h3>
                     </div>
-                    <div class="p-6 space-y-5">
+                    <div class="p-6 space-y-4">
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Pilih Kategori Tema</label>
-                            <select id="kategori_tema" onchange="updateTemaUI()" class="w-full md:w-1/2 border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm bg-white">
+                            <label class="block text-sm font-semibold text-slate-600 mb-1.5">Pilih Kategori Tema</label>
+                            <select id="kategori_tema" onchange="updateTemaUI()" class="form-input md:w-1/2">
                                 <option value="">-- Pilih Kategori --</option>
                                 <option value="lintas_mapel">Tema Lintas Mapel</option>
                                 <option value="kebiasaan">7 Kebiasaan Anak Indonesia Hebat</option>
                                 <option value="lainnya">Tema Lainnya</option>
                             </select>
                         </div>
-                        
-                        <div id="wrap_lintas_mapel" class="hidden p-4 bg-slate-50 border border-slate-200 rounded-lg">
-                            <p class="text-xs font-semibold text-slate-500 mb-3">Pilih Sub-Tema (Bisa lebih dari satu):</p>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="chk_lintas_mapel"></div>
+                        <div id="wrap_lintas_mapel" class="hidden p-4 rounded-xl border border-indigo-100 bg-indigo-50/50">
+                            <p class="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-3">Pilih Sub-Tema (bisa lebih dari satu):</p>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5" id="chk_lintas_mapel"></div>
                         </div>
-
-                        <div id="wrap_kebiasaan" class="hidden p-4 bg-slate-50 border border-slate-200 rounded-lg">
-                            <p class="text-xs font-semibold text-slate-500 mb-3">Pilih Kebiasaan (Bisa lebih dari satu):</p>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="chk_kebiasaan"></div>
+                        <div id="wrap_kebiasaan" class="hidden p-4 rounded-xl border border-indigo-100 bg-indigo-50/50">
+                            <p class="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-3">Pilih Kebiasaan (bisa lebih dari satu):</p>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5" id="chk_kebiasaan"></div>
                         </div>
-
-                        <div id="wrap_tema_lainnya" class="hidden p-4 bg-slate-50 border border-slate-200 rounded-lg">
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Ketik Tema Anda:</label>
-                            <input type="text" id="tema_lainnya_input" placeholder="Masukkan tema khusus..." class="w-full border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                        <div id="wrap_tema_lainnya" class="hidden p-4 rounded-xl border border-indigo-100 bg-indigo-50/50">
+                            <label class="block text-sm font-semibold text-slate-600 mb-1.5">Ketik Tema Anda:</label>
+                            <input type="text" id="tema_lainnya_input" placeholder="Masukkan tema khusus..." class="form-input">
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                    <div class="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center gap-3">
-                        <span class="bg-blue-600 text-white w-7 h-7 rounded-md flex items-center justify-center text-sm font-bold">3</span>
+                <!-- SEKSI 3 -->
+                <div class="card overflow-hidden">
+                    <div class="section-header">
+                        <span class="section-badge">3</span>
                         <h3 class="font-semibold text-slate-800">Target Dimensi Profil Lulusan</h3>
                     </div>
                     <div class="p-6">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3" id="chk_dimensi"></div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5" id="chk_dimensi"></div>
                     </div>
                 </div>
 
-                <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                    <div class="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center gap-3">
-                        <span class="bg-blue-600 text-white w-7 h-7 rounded-md flex items-center justify-center text-sm font-bold">4</span>
+                <!-- SEKSI 4 -->
+                <div class="card overflow-hidden">
+                    <div class="section-header">
+                        <span class="section-badge">4</span>
                         <h3 class="font-semibold text-slate-800">Praktik Pedagogik</h3>
                     </div>
-                    <div class="p-6 space-y-5">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div class="p-6 space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-sm font-medium text-slate-700 mb-1">Pendekatan Belajar</label>
-                                <select id="pendekatan" onchange="togglePendekatanLainnya()" class="w-full border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm bg-white">
+                                <label class="block text-sm font-semibold text-slate-600 mb-1.5">Pendekatan Belajar</label>
+                                <select id="pendekatan" onchange="togglePendekatanLainnya()" class="form-input">
                                     <option value="">-- Pilih Pendekatan --</option>
                                     <option>Deep Learning</option>
                                     <option>PjBL (Project-Based Learning)</option>
@@ -189,11 +231,11 @@
                                     <option>STEAM</option>
                                     <option value="Lainnya">Lainnya...</option>
                                 </select>
-                                <input type="text" id="pendekatan_lainnya" placeholder="Ketik pendekatan..." class="hidden mt-2 w-full border border-slate-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                                <input type="text" id="pendekatan_lainnya" placeholder="Ketik pendekatan..." class="hidden mt-2 form-input">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-slate-700 mb-1">Fokus Pengalaman Belajar</label>
-                                <select id="fokus" class="w-full border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm bg-white">
+                                <label class="block text-sm font-semibold text-slate-600 mb-1.5">Fokus Pengalaman Belajar</label>
+                                <select id="fokus" class="form-input">
                                     <option value="">-- Pilih Fokus --</option>
                                     <option>Memahami (mindful, joyful, meaningful)</option>
                                     <option>Mengaplikasi</option>
@@ -201,97 +243,91 @@
                                 </select>
                             </div>
                         </div>
-
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-2">Kondisi Lingkungan</label>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3" id="chk_lingkungan"></div>
+                            <label class="block text-sm font-semibold text-slate-600 mb-2">Kondisi Lingkungan</label>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5" id="chk_lingkungan"></div>
                         </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2 border-t border-slate-100">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t border-slate-100">
                             <div>
-                                <label class="block text-sm font-medium text-slate-700 mb-1">Alokasi Waktu</label>
-                                <input type="text" id="waktu" placeholder="Contoh: 120 Menit" class="w-full border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
+                                <label class="block text-sm font-semibold text-slate-600 mb-1.5">Alokasi Waktu</label>
+                                <input type="text" id="waktu" placeholder="Contoh: 120 Menit" class="form-input">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-slate-700 mb-1">Jumlah Pertemuan (Sesi)</label>
-                                <input type="number" id="sesi" placeholder="Contoh: 4" class="w-full border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
+                                <label class="block text-sm font-semibold text-slate-600 mb-1.5">Jumlah Pertemuan (Sesi)</label>
+                                <input type="number" id="sesi" placeholder="Contoh: 4" class="form-input">
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mb-8">
-                    <div class="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center gap-3">
-                        <span class="bg-blue-600 text-white w-7 h-7 rounded-md flex items-center justify-center text-sm font-bold">5</span>
+                <!-- SEKSI 5 -->
+                <div class="card overflow-hidden">
+                    <div class="section-header">
+                        <span class="section-badge">5</span>
                         <h3 class="font-semibold text-slate-800">Integrasi Mata Pelajaran</h3>
                     </div>
                     <div class="p-6">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mb-5" id="chk_mapel"></div>
-                        
-                        <div id="dynamic_mapel" class="space-y-3 mb-3"></div>
-                        
-                        <button onclick="addMapelInput()" class="text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1 bg-blue-50 px-3 py-2 rounded-lg transition-colors border border-blue-100">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 mb-4" id="chk_mapel"></div>
+                        <div id="dynamic_mapel" class="space-y-2.5 mb-3"></div>
+                        <button onclick="addMapelInput()" class="text-sm font-semibold text-indigo-600 hover:text-indigo-700 flex items-center gap-1.5 bg-indigo-50 hover:bg-indigo-100 px-4 py-2.5 rounded-xl transition-colors border border-indigo-100">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                             Tambah Mata Pelajaran Lain
                         </button>
                     </div>
                 </div>
 
-                <div class="flex flex-col sm:flex-row items-center justify-end gap-3 pt-4">
-                    <button onclick="processData(false)" class="w-full sm:w-auto px-6 py-3 bg-white border border-slate-300 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition-all-300 shadow-sm">
-                        Simpan ke Riwayat
-                    </button>
-                    <button onclick="processData(true)" class="w-full sm:w-auto px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all-300 shadow-md shadow-blue-500/30 flex items-center justify-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                        Simpan & Unduh PDF
+                <!-- TOMBOL KONFIRMASI -->
+                <div class="flex justify-end pt-2">
+                    <button onclick="openPreviewModal()" class="px-8 py-3.5 font-bold text-white rounded-2xl flex items-center gap-2.5 text-sm transition-all" style="background: linear-gradient(135deg, #4f46e5, #7c3aed); box-shadow: 0 8px 24px rgba(99,102,241,0.35);">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        Konfirmasi & Pratinjau Data
                     </button>
                 </div>
             </div>
 
+            <!-- VIEW: RIWAYAT -->
             <div id="view-riwayat" class="hidden max-w-5xl mx-auto">
-                <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                    <div class="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
-                        <h3 class="font-semibold text-slate-800">Riwayat Modul Tersimpan</h3>
-                        <span id="badge-count" class="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-1 rounded-full">0</span>
+                <div class="card overflow-hidden">
+                    <div class="section-header justify-between">
+                        <div class="flex items-center gap-3">
+                            <h3 class="font-semibold text-slate-800">Riwayat Modul Tersimpan</h3>
+                            <span id="badge-count" class="text-xs font-bold px-2.5 py-1 rounded-full" style="background:#e0e7ff;color:#4f46e5;">0</span>
+                        </div>
                     </div>
-                    <div class="p-0 overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
                             <thead>
-                                <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200">
-                                    <th class="p-4 font-semibold">Satuan Pendidikan</th>
-                                    <th class="p-4 font-semibold">Jenjang</th>
-                                    <th class="p-4 font-semibold">Tanggal Dibuat</th>
-                                    <th class="p-4 font-semibold text-right">Aksi</th>
+                                <tr class="text-xs uppercase tracking-wider border-b border-slate-100" style="color:#94a3b8;background:#f8fafc;">
+                                    <th class="p-4 font-bold">Satuan Pendidikan</th>
+                                    <th class="p-4 font-bold">Jenjang</th>
+                                    <th class="p-4 font-bold">Tanggal</th>
+                                    <th class="p-4 font-bold text-right">Aksi</th>
                                 </tr>
                             </thead>
-                            <tbody id="table-history" class="divide-y divide-slate-100 text-sm text-slate-700">
-                                </tbody>
+                            <tbody id="table-history" class="divide-y divide-slate-50 text-sm"></tbody>
                         </table>
-                        <div id="empty-history" class="p-10 text-center text-slate-400">
-                            <svg class="w-12 h-12 mx-auto mb-3 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
-                            <p>Belum ada riwayat modul.</p>
+                        <div id="empty-history" class="p-12 text-center" style="color:#94a3b8;">
+                            <svg class="w-14 h-14 mx-auto mb-3 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            <p class="font-medium">Belum ada riwayat modul.</p>
                         </div>
                     </div>
                 </div>
             </div>
 
+            <!-- VIEW: PENGATURAN -->
             <div id="view-pengaturan" class="hidden max-w-2xl mx-auto">
-                <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                    <div class="bg-slate-50 px-6 py-4 border-b border-slate-200">
-                        <h3 class="font-semibold text-slate-800">Informasi Akun</h3>
-                    </div>
+                <div class="card overflow-hidden">
+                    <div class="section-header"><h3 class="font-semibold text-slate-800">Informasi Akun</h3></div>
                     <div class="p-6 space-y-4 text-sm">
                         <div>
-                            <label class="block font-medium text-slate-700 mb-1">Nama Lengkap</label>
-                            <input type="text" value="Guru Pengampu" class="w-full border border-slate-300 rounded-lg px-4 py-2 bg-slate-50" readonly>
+                            <label class="block font-semibold text-slate-600 mb-1.5">Nama Lengkap</label>
+                            <input type="text" value="Guru Pengampu" class="form-input bg-slate-50" readonly>
                         </div>
                         <div>
-                            <label class="block font-medium text-slate-700 mb-1">Email Terdaftar</label>
-                            <input type="text" value="admin@modulku.app" class="w-full border border-slate-300 rounded-lg px-4 py-2 bg-slate-50" readonly>
+                            <label class="block font-semibold text-slate-600 mb-1.5">Email Terdaftar</label>
+                            <input type="text" value="admin@modulku.app" class="form-input bg-slate-50" readonly>
                         </div>
-                        <div class="pt-4 border-t border-slate-100">
-                            <p class="text-slate-500 text-xs">Untuk mengubah data profil, silakan hubungi administrator sistem sekolah Anda.</p>
-                        </div>
+                        <p class="text-xs text-slate-400 pt-2 border-t border-slate-100">Untuk mengubah data profil, silakan hubungi administrator sistem.</p>
                     </div>
                 </div>
             </div>
@@ -299,37 +335,60 @@
         </div>
     </main>
 
-    <div id="loading" class="fixed inset-0 bg-slate-900/80 z-[100] hidden flex-col items-center justify-center backdrop-blur-sm">
-        <div class="w-12 h-12 border-4 border-white/20 border-t-blue-500 rounded-full animate-spin mb-4"></div>
-        <p class="text-white font-medium">Memproses Dokumen PDF...</p>
-    </div>
-
-    <div id="toast" class="fixed bottom-6 right-6 bg-slate-800 text-white px-5 py-3 rounded-xl shadow-xl transform translate-y-20 opacity-0 transition-all duration-300 z-[60] flex items-center gap-2">
-        <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-        <span id="toast-msg" class="text-sm font-medium">Berhasil disimpan!</span>
-    </div>
-
-    <div id="pdf-template" class="hidden bg-white text-slate-800 p-10 font-sans" style="width: 800px;">
-        <div class="border-b-4 border-blue-700 pb-4 mb-6 flex items-center gap-4">
-            <div class="w-12 h-12 bg-blue-700 text-white rounded-lg flex items-center justify-center">
-                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+    <!-- ============================================
+         MODAL PRATINJAU / KONFIRMASI
+    ============================================= -->
+    <div id="modal-overlay">
+        <div id="modal-box">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800">Pratinjau Data Modul</h2>
+                    <p class="text-xs text-slate-400 mt-0.5">Periksa kembali sebelum menyimpan atau mengunduh PDF</p>
+                </div>
+                <button onclick="closeModal()" class="w-9 h-9 flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
             </div>
-            <div>
-                <h1 class="text-2xl font-bold text-slate-900 leading-tight">MODUL KOKURIKULER</h1>
-                <p class="text-slate-500 text-sm">Dokumen Perancangan Pembelajaran Digital</p>
+
+            <!-- Modal Body / Preview -->
+            <div id="modal-preview-content" class="overflow-y-auto flex-1" style="max-height: calc(90vh - 140px);"></div>
+
+            <!-- Modal Footer -->
+            <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100 flex-shrink-0 bg-slate-50 rounded-b-2xl">
+                <button onclick="closeModal()" class="px-5 py-2.5 text-sm font-semibold text-slate-600 rounded-xl border border-slate-200 hover:bg-slate-100 transition-colors bg-white">
+                    Kembali Edit
+                </button>
+                <button onclick="doSave(false)" class="px-5 py-2.5 text-sm font-semibold text-indigo-700 rounded-xl border border-indigo-200 hover:bg-indigo-50 transition-colors bg-white flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+                    Simpan ke Riwayat
+                </button>
+                <button onclick="doSave(true)" class="px-5 py-2.5 text-sm font-bold text-white rounded-xl flex items-center gap-2 transition-all" style="background: linear-gradient(135deg,#4f46e5,#7c3aed); box-shadow: 0 4px 14px rgba(99,102,241,0.35);">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    Simpan & Unduh PDF
+                </button>
             </div>
         </div>
-        
-        <div id="pdf-content-body" class="space-y-4"></div>
-
-        <div class="mt-10 pt-4 border-t border-slate-200 text-center text-slate-400 text-xs">
-            Dicetak otomatis oleh Sistem ModulKu pada <span id="pdf-date"></span>
-        </div>
     </div>
 
-<script>
+    <!-- LOADING -->
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <p class="text-white font-semibold text-sm">Membuat PDF...</p>
+    </div>
+
+    <!-- TOAST -->
+    <div id="toast">
+        <svg class="w-4 h-4 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+        <span id="toast-msg">Berhasil!</span>
+    </div>
+
+    <!-- AREA PRINT TERSEMBUNYI -->
+    <div id="print-area" style="display:none;"></div>
+
+    <script>
     // ==========================================
-    // 1. DATA REFERENSI
+    // DATA REFERENSI
     // ==========================================
     const dataRef = {
         jenjang: {
@@ -364,47 +423,46 @@
 
     let historyData = JSON.parse(localStorage.getItem('modulHistory') || '[]');
     let mapelExtraCount = 0;
+    let pendingData = null; // data yg sudah dikonfirmasi
 
     // ==========================================
-    // 2. INISIALISASI UI
+    // INISIALISASI
     // ==========================================
     window.onload = () => {
-        buildCheckboxes('chk_lintas_mapel', dataRef.temaLintasMapel, 'lintas');
-        buildCheckboxes('chk_kebiasaan', dataRef.temaKebiasaan, 'kebiasaan');
-        buildCheckboxes('chk_dimensi', dataRef.dimensi, 'dimensi');
-        buildCheckboxes('chk_lingkungan', dataRef.lingkungan, 'lingkungan');
-        buildCheckboxes('chk_mapel', dataRef.mapel, 'mapel');
+        buildCheckboxes('chk_lintas_mapel', dataRef.temaLintasMapel, 'chk_lintas');
+        buildCheckboxes('chk_kebiasaan', dataRef.temaKebiasaan, 'chk_kebiasaan');
+        buildCheckboxes('chk_dimensi', dataRef.dimensi, 'chk_dimensi');
+        buildCheckboxes('chk_lingkungan', dataRef.lingkungan, 'chk_lingkungan');
+        buildCheckboxes('chk_mapel', dataRef.mapel, 'chk_mapel');
         renderHistory();
     };
 
-    // Fungsi Render Checkbox Murni HTML (Bebas Bug Click)
     function buildCheckboxes(containerId, items, groupName) {
         const container = document.getElementById(containerId);
-        container.innerHTML = items.map((item, idx) => `
-            <label class="flex items-start gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors">
-                <input type="checkbox" name="chk_${groupName}" value="${item}" class="mt-0.5 w-4 h-4 text-blue-600 bg-white border-slate-300 rounded focus:ring-blue-500 cursor-pointer">
-                <span class="text-sm text-slate-700 leading-tight">${item}</span>
+        container.innerHTML = items.map(item => `
+            <label class="chk-label">
+                <input type="checkbox" name="${groupName}" value="${item}" class="w-4 h-4 rounded mt-0.5 flex-shrink-0" style="accent-color:#6366f1;">
+                <span>${item}</span>
             </label>
         `).join('');
     }
 
     // ==========================================
-    // 3. LOGIKA KONDISIONAL FORMULIR
+    // LOGIKA FORM
     // ==========================================
     function updateJenjang() {
         const iden = document.getElementById('identitas').value;
-        const elJenjang = document.getElementById('jenjang');
-        
-        elJenjang.innerHTML = '<option value="">-- Pilih Jenjang --</option>';
-        if(iden && dataRef.jenjang[iden]) {
-            elJenjang.disabled = false;
-            elJenjang.classList.replace('bg-slate-50', 'bg-white');
+        const el = document.getElementById('jenjang');
+        el.innerHTML = '<option value="">-- Pilih Jenjang --</option>';
+        if (iden && dataRef.jenjang[iden]) {
+            el.disabled = false;
+            el.style.background = 'white';
             dataRef.jenjang[iden].forEach(v => {
-                elJenjang.innerHTML += `<option value="${v}">${v}</option>`;
+                el.innerHTML += `<option value="${v}">${v}</option>`;
             });
         } else {
-            elJenjang.disabled = true;
-            elJenjang.classList.replace('bg-white', 'bg-slate-50');
+            el.disabled = true;
+            el.style.background = '#f8fafc';
         }
     }
 
@@ -417,13 +475,9 @@
 
     function togglePendekatanLainnya() {
         const val = document.getElementById('pendekatan').value;
-        const elLain = document.getElementById('pendekatan_lainnya');
-        if(val === 'Lainnya') {
-            elLain.classList.remove('hidden');
-        } else {
-            elLain.classList.add('hidden');
-            elLain.value = '';
-        }
+        const el = document.getElementById('pendekatan_lainnya');
+        if (val === 'Lainnya') { el.classList.remove('hidden'); }
+        else { el.classList.add('hidden'); el.value = ''; }
     }
 
     function addMapelInput() {
@@ -433,246 +487,379 @@
         div.className = "flex items-center gap-2";
         div.id = id;
         div.innerHTML = `
-            <input type="text" placeholder="Ketik nama mata pelajaran..." class="flex-1 border border-slate-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-            <button onclick="document.getElementById('${id}').remove()" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Hapus">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+            <input type="text" placeholder="Ketik nama mata pelajaran..." class="flex-1 form-input">
+            <button onclick="document.getElementById('${id}').remove()" class="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-colors flex-shrink-0">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
         `;
         document.getElementById('dynamic_mapel').appendChild(div);
     }
 
     // ==========================================
-    // 4. PENGUMPULAN DATA
+    // PENGUMPULAN DATA
     // ==========================================
-    function getCheckedValues(name) {
+    function getChecked(name) {
         return Array.from(document.querySelectorAll(`input[name="${name}"]:checked`)).map(cb => cb.value);
     }
 
     function getFormData() {
-        // Ambil Data Tema
         let temaFinal = '-';
         const katTema = document.getElementById('kategori_tema').value;
-        if(katTema === 'lintas_mapel') {
-            const arr = getCheckedValues('chk_lintas');
-            temaFinal = arr.length ? 'Lintas Mapel: ' + arr.join(', ') : 'Lintas Mapel';
-        } else if(katTema === 'kebiasaan') {
-            const arr = getCheckedValues('chk_kebiasaan');
-            temaFinal = arr.length ? '7 Kebiasaan: ' + arr.join(', ') : '7 Kebiasaan';
-        } else if(katTema === 'lainnya') {
+        if (katTema === 'lintas_mapel') {
+            const arr = getChecked('chk_lintas');
+            temaFinal = arr.length ? 'Lintas Mapel: ' + arr.join(', ') : 'Lintas Mapel (tidak ada pilihan)';
+        } else if (katTema === 'kebiasaan') {
+            const arr = getChecked('chk_kebiasaan');
+            temaFinal = arr.length ? '7 Kebiasaan: ' + arr.join(', ') : '7 Kebiasaan (tidak ada pilihan)';
+        } else if (katTema === 'lainnya') {
             temaFinal = document.getElementById('tema_lainnya_input').value || '-';
         }
 
-        // Ambil Data Pendekatan
         const p_base = document.getElementById('pendekatan').value;
         const pendekatanFinal = p_base === 'Lainnya' ? document.getElementById('pendekatan_lainnya').value : p_base;
 
-        // Ambil Mapel (Checkboxes + Dynamic Inputs)
-        const mapelBase = getCheckedValues('chk_mapel');
+        const mapelBase = getChecked('chk_mapel');
         const mapelExtra = Array.from(document.querySelectorAll('#dynamic_mapel input')).map(i => i.value.trim()).filter(Boolean);
         const mapelFinal = [...mapelBase, ...mapelExtra].join(', ') || '-';
+        const dimensiArr = getChecked('chk_dimensi');
+        const lingkunganArr = getChecked('chk_lingkungan');
 
         return {
-            satuan: document.getElementById('nama_satuan').value || '-',
+            satuan: document.getElementById('nama_satuan').value.trim() || '-',
             identitas: document.getElementById('identitas').value || '-',
             jenjang: document.getElementById('jenjang').value || '-',
             tujuan: document.getElementById('tujuan').value || '-',
             fase: document.getElementById('fase').value || '-',
             tema: temaFinal,
-            dimensi: getCheckedValues('chk_dimensi').join(', ') || '-',
+            dimensi: dimensiArr.length ? dimensiArr.join(', ') : '-',
             pendekatan: pendekatanFinal || '-',
             fokus: document.getElementById('fokus').value || '-',
-            lingkungan: getCheckedValues('chk_lingkungan').join(', ') || '-',
+            lingkungan: lingkunganArr.length ? lingkunganArr.join(', ') : '-',
             waktu: document.getElementById('waktu').value || '-',
             sesi: document.getElementById('sesi').value || '-',
             mapel: mapelFinal,
-            tanggal: new Date().toLocaleDateString('id-ID', {day:'numeric', month:'short', year:'numeric'})
+            tanggal: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
         };
     }
 
     // ==========================================
-    // 5. PDF GENERATION (TEKNIK KLONING ANTI-BLANK)
+    // MODAL PREVIEW
     // ==========================================
-    function processData(isDownloadPdf) {
+    function openPreviewModal() {
         const data = getFormData();
-        
-        // Validasi minimal
-        if(data.satuan === '-') {
+
+        if (data.satuan === '-') {
             alert('Mohon isi Nama Satuan Pendidikan terlebih dahulu!');
             document.getElementById('nama_satuan').focus();
             return;
         }
 
-        // Simpan ke History
+        pendingData = data;
+
+        const sections = [
+            {
+                title: '1. Informasi Dasar',
+                rows: [
+                    ['Nama Satuan Pendidikan', data.satuan],
+                    ['Identitas', data.identitas],
+                    ['Jenjang', data.jenjang],
+                    ['Fase Belajar', data.fase],
+                    ['Tujuan Penggunaan', data.tujuan],
+                ]
+            },
+            {
+                title: '2. Konteks & Dimensi',
+                rows: [
+                    ['Tema Kokurikuler', data.tema],
+                    ['Dimensi Profil Lulusan', data.dimensi],
+                ]
+            },
+            {
+                title: '3. Pedagogik & Pelaksanaan',
+                rows: [
+                    ['Pendekatan Belajar', data.pendekatan],
+                    ['Fokus Pembelajaran', data.fokus],
+                    ['Kondisi Lingkungan', data.lingkungan],
+                    ['Alokasi Waktu', data.waktu],
+                    ['Jumlah Sesi', data.sesi],
+                ]
+            },
+            {
+                title: '4. Integrasi Mata Pelajaran',
+                rows: [
+                    ['Mata Pelajaran', data.mapel],
+                ]
+            }
+        ];
+
+        let html = '';
+        sections.forEach(s => {
+            html += `<div class="preview-section-title">${s.title}</div>`;
+            html += `<div>`;
+            s.rows.forEach(r => {
+                html += `
+                    <div class="preview-row">
+                        <div class="preview-key">${r[0]}</div>
+                        <div class="preview-val">${r[1]}</div>
+                    </div>
+                `;
+            });
+            html += `</div>`;
+        });
+
+        document.getElementById('modal-preview-content').innerHTML = html;
+        document.getElementById('modal-overlay').classList.add('show');
+    }
+
+    function closeModal() {
+        document.getElementById('modal-overlay').classList.remove('show');
+    }
+
+    // ==========================================
+    // SIMPAN & PDF
+    // ==========================================
+    function doSave(isDownloadPdf) {
+        if (!pendingData) return;
+        const data = pendingData;
+
+        // Simpan riwayat
         historyData.unshift(data);
         localStorage.setItem('modulHistory', JSON.stringify(historyData));
         renderHistory();
+        closeModal();
 
-        if(!isDownloadPdf) {
+        if (!isDownloadPdf) {
             showToast('Tersimpan di Riwayat!');
             return;
         }
 
-        // --- PROSES PDF ---
-        document.getElementById('loading').classList.replace('hidden', 'flex');
-        document.getElementById('pdf-date').innerText = new Date().toLocaleString('id-ID');
+        // Generate PDF pakai window baru (paling reliabel, tidak pernah blank)
+        document.getElementById('loading-overlay').classList.add('show');
 
-        // Susun HTML untuk PDF
-        const pdfTable = document.getElementById('pdf-content-body');
-        pdfTable.innerHTML = createPdfSection('1. Informasi Dasar', [
-            ['Satuan Pendidikan', data.satuan],
-            ['Tingkat / Jenjang', `${data.identitas} - ${data.jenjang}`],
-            ['Fase Belajar', data.fase],
-            ['Tujuan', data.tujuan]
-        ]) + 
-        createPdfSection('2. Konteks & Dimensi', [
-            ['Tema Kokurikuler', data.tema],
-            ['Dimensi Profil', data.dimensi]
-        ]) +
-        createPdfSection('3. Pedagogik & Pelaksanaan', [
-            ['Pendekatan', data.pendekatan],
-            ['Fokus Pembelajaran', data.fokus],
-            ['Kondisi Lingkungan', data.lingkungan],
-            ['Alokasi Waktu', `${data.waktu} (Total ${data.sesi} Sesi)`]
-        ]) +
-        createPdfSection('4. Integrasi', [
-            ['Mata Pelajaran', data.mapel]
-        ]);
-
-        // TEKNIK KLONING (Solusi Tuntas Bug Kertas Kosong)
-        const originalEl = document.getElementById('pdf-template');
-        originalEl.style.display = 'block'; // Tampilkan sekejap untuk dicopy
+        const pdfHTML = buildPdfHTML(data);
+        const printWin = window.open('', '_blank', 'width=900,height=700');
         
-        const cloneEl = originalEl.cloneNode(true); // Copy seluruh isi
-        originalEl.style.display = 'none'; // Sembunyikan aslinya lagi
-
-        // Taruh copy-an di absolute 0,0 di luar layar
-        cloneEl.style.position = 'absolute';
-        cloneEl.style.top = '0';
-        cloneEl.style.left = '0';
-        cloneEl.style.zIndex = '-9999';
-        document.body.appendChild(cloneEl);
-
-        const opt = {
-            margin: 15, // Margin PDF (mm)
-            filename: `Modul_${data.satuan.replace(/\s+/g,'_')}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true, logging: false },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        };
-
-        // Render PDF dari elemen Kloning
-        setTimeout(() => {
-            html2pdf().set(opt).from(cloneEl).save().then(() => {
-                document.body.removeChild(cloneEl); // Buang copy-an
-                document.getElementById('loading').classList.replace('flex', 'hidden');
-                showToast('PDF Berhasil Diunduh!');
-            }).catch(err => {
-                console.error(err);
-                document.body.removeChild(cloneEl);
-                document.getElementById('loading').classList.replace('flex', 'hidden');
-                alert('Gagal mengekspor PDF.');
-            });
-        }, 300);
-    }
-
-    function createPdfSection(title, rows) {
-        let rowsHtml = rows.map((r, i) => `
-            <div class="flex border-b border-slate-200 ${i % 2 === 0 ? 'bg-slate-50' : 'bg-white'}">
-                <div class="w-1/3 p-3 text-sm font-semibold text-slate-700 border-r border-slate-200">${r[0]}</div>
-                <div class="w-2/3 p-3 text-sm text-slate-800">${r[1]}</div>
-            </div>
-        `).join('');
-
-        return `
-        <div class="mb-6 rounded-lg border border-slate-300 overflow-hidden page-break-inside-avoid">
-            <div class="bg-slate-800 text-white px-4 py-2 text-sm font-bold">${title}</div>
-            <div>${rowsHtml}</div>
-        </div>`;
-    }
-
-    // ==========================================
-    // 6. RIWAYAT & NAVIGASI UI
-    // ==========================================
-    function renderHistory() {
-        const tbody = document.getElementById('table-history');
-        const emptyState = document.getElementById('empty-history');
-        document.getElementById('badge-count').innerText = historyData.length;
-
-        if(historyData.length === 0) {
-            tbody.innerHTML = '';
-            emptyState.style.display = 'block';
+        if (!printWin) {
+            alert('Pop-up diblokir browser. Izinkan pop-up untuk mengunduh PDF.');
+            document.getElementById('loading-overlay').classList.remove('show');
             return;
         }
 
-        emptyState.style.display = 'none';
+        printWin.document.write(pdfHTML);
+        printWin.document.close();
+
+        printWin.onload = function () {
+            setTimeout(() => {
+                document.getElementById('loading-overlay').classList.remove('show');
+                showToast('Jendela PDF telah dibuka!');
+                printWin.focus();
+                printWin.print();
+            }, 800);
+        };
+    }
+
+    function buildPdfHTML(data) {
+        const now = new Date().toLocaleString('id-ID', { dateStyle: 'full', timeStyle: 'short' });
+
+        const sections = [
+            {
+                title: '1. Informasi Dasar',
+                rows: [
+                    ['Nama Satuan Pendidikan', data.satuan],
+                    ['Identitas Lembaga', data.identitas],
+                    ['Tingkat / Jenjang', data.jenjang],
+                    ['Fase Belajar', data.fase],
+                    ['Tujuan Penggunaan', data.tujuan],
+                ]
+            },
+            {
+                title: '2. Konteks Pengembangan & Dimensi',
+                rows: [
+                    ['Tema Kokurikuler', data.tema],
+                    ['Dimensi Profil Lulusan', data.dimensi],
+                ]
+            },
+            {
+                title: '3. Praktik Pedagogik & Pelaksanaan',
+                rows: [
+                    ['Pendekatan Belajar', data.pendekatan],
+                    ['Fokus Pembelajaran', data.fokus],
+                    ['Kondisi Lingkungan', data.lingkungan],
+                    ['Alokasi Waktu', data.waktu],
+                    ['Jumlah Sesi/Pertemuan', data.sesi],
+                ]
+            },
+            {
+                title: '4. Integrasi Mata Pelajaran',
+                rows: [
+                    ['Mata Pelajaran Terintegrasi', data.mapel],
+                ]
+            }
+        ];
+
+        let sectionsHTML = '';
+        sections.forEach(s => {
+            let rowsHTML = s.rows.map((r, i) => `
+                <tr style="background:${i % 2 === 0 ? '#f8fafc' : '#ffffff'};">
+                    <td style="padding:10px 14px;font-size:12px;font-weight:600;color:#475569;border-right:1px solid #e2e8f0;width:35%;vertical-align:top;">${r[0]}</td>
+                    <td style="padding:10px 14px;font-size:12px;color:#1e293b;line-height:1.6;">${r[1]}</td>
+                </tr>
+            `).join('');
+
+            sectionsHTML += `
+                <div style="margin-bottom:20px;border-radius:10px;overflow:hidden;border:1px solid #e2e8f0;">
+                    <div style="background:linear-gradient(135deg,#1e293b,#334155);color:white;padding:10px 16px;font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;">${s.title}</div>
+                    <table style="width:100%;border-collapse:collapse;">${rowsHTML}</table>
+                </div>
+            `;
+        });
+
+        return `<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Modul Kokurikuler - ${data.satuan}</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Plus Jakarta Sans',sans-serif; background:white; color:#1e293b; padding:40px; max-width:800px; margin:0 auto; }
+    @media print {
+        body { padding: 20px; }
+        button { display: none !important; }
+    }
+</style>
+</head>
+<body>
+    <!-- HEADER -->
+    <div style="border-bottom:4px solid #4f46e5;padding-bottom:20px;margin-bottom:28px;display:flex;align-items:center;gap:16px;">
+        <div style="width:52px;height:52px;background:linear-gradient(135deg,#4f46e5,#7c3aed);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg width="28" height="28" fill="none" stroke="white" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+        </div>
+        <div>
+            <h1 style="font-size:22px;font-weight:800;color:#0f172a;letter-spacing:-0.3px;">MODUL KOKURIKULER</h1>
+            <p style="font-size:12px;color:#64748b;margin-top:2px;">Dokumen Perancangan Pembelajaran Digital &mdash; ${data.satuan}</p>
+        </div>
+    </div>
+
+    <!-- INFO STRIP -->
+    <div style="background:#f1f5f9;border-radius:10px;padding:12px 16px;margin-bottom:24px;display:flex;gap:24px;font-size:12px;color:#475569;">
+        <span><strong>Dibuat:</strong> ${now}</span>
+        <span><strong>Jenjang:</strong> ${data.identitas} &mdash; ${data.jenjang}</span>
+        <span><strong>Fase:</strong> ${data.fase}</span>
+    </div>
+
+    <!-- SECTIONS -->
+    ${sectionsHTML}
+
+    <!-- FOOTER -->
+    <div style="margin-top:32px;padding-top:16px;border-top:1px solid #e2e8f0;text-align:center;font-size:11px;color:#94a3b8;">
+        Dicetak otomatis oleh Sistem <strong>ModulKu.app</strong> &bull; ${now}
+    </div>
+
+    <!-- TOMBOL PRINT (hanya di layar) -->
+    <div style="margin-top:24px;text-align:center;">
+        <button onclick="window.print()" style="background:linear-gradient(135deg,#4f46e5,#7c3aed);color:white;border:none;padding:12px 32px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;">
+            🖨️ Cetak / Simpan PDF
+        </button>
+    </div>
+</body>
+</html>`;
+    }
+
+    // ==========================================
+    // RIWAYAT
+    // ==========================================
+    function renderHistory() {
+        const tbody = document.getElementById('table-history');
+        const empty = document.getElementById('empty-history');
+        document.getElementById('badge-count').innerText = historyData.length;
+
+        if (historyData.length === 0) {
+            tbody.innerHTML = '';
+            empty.style.display = 'block';
+            return;
+        }
+        empty.style.display = 'none';
         tbody.innerHTML = historyData.map((d, i) => `
             <tr class="hover:bg-slate-50 transition-colors">
-                <td class="p-4 font-medium text-slate-900">${d.satuan}</td>
-                <td class="p-4"><span class="bg-blue-100 text-blue-700 py-1 px-2 rounded text-xs font-semibold">${d.jenjang}</span></td>
-                <td class="p-4 text-xs text-slate-500">${d.tanggal}</td>
+                <td class="p-4 font-semibold text-slate-800">${d.satuan}</td>
+                <td class="p-4"><span class="text-xs font-bold px-2.5 py-1 rounded-full" style="background:#ede9fe;color:#5b21b6;">${d.jenjang}</span></td>
+                <td class="p-4 text-xs text-slate-400">${d.tanggal}</td>
                 <td class="p-4 text-right">
+                    <button onclick="viewHistoryPdf(${i})" class="text-xs font-semibold mr-2 text-indigo-600 border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors">PDF</button>
                     <button onclick="hapusRiwayat(${i})" class="text-xs font-semibold text-red-500 border border-red-200 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors">Hapus</button>
                 </td>
             </tr>
         `).join('');
     }
 
+    function viewHistoryPdf(i) {
+        const data = historyData[i];
+        const pdfHTML = buildPdfHTML(data);
+        const w = window.open('', '_blank', 'width=900,height=700');
+        if (!w) { alert('Pop-up diblokir. Izinkan pop-up untuk melihat PDF.'); return; }
+        w.document.write(pdfHTML);
+        w.document.close();
+        w.onload = () => { w.focus(); };
+    }
+
     function hapusRiwayat(index) {
-        if(confirm('Yakin ingin menghapus riwayat ini?')) {
+        if (confirm('Yakin ingin menghapus riwayat ini?')) {
             historyData.splice(index, 1);
             localStorage.setItem('modulHistory', JSON.stringify(historyData));
             renderHistory();
         }
     }
 
-    function resetForm() {
-        if(!confirm('Reset semua isian formulir?')) return;
-        document.querySelectorAll('input[type="text"], input[type="number"], select').forEach(el => el.value = '');
-        document.querySelectorAll('input[type="checkbox"]').forEach(el => el.checked = false);
-        document.getElementById('dynamic_mapel').innerHTML = '';
-        updateJenjang();
-        updateTemaUI();
-        togglePendekatanLainnya();
-        window.scrollTo({top: 0, behavior: 'smooth'});
-    }
-
-    function switchTab(tabId, btnElement) {
-        // Toggle view
+    // ==========================================
+    // NAVIGASI & UTILITAS
+    // ==========================================
+    function switchTab(tabId, el) {
         ['buat-modul', 'riwayat', 'pengaturan'].forEach(id => {
             document.getElementById(`view-${id}`).classList.add('hidden');
         });
         document.getElementById(`view-${tabId}`).classList.remove('hidden');
 
-        // Ubah Title topbar
-        const titles = { 'buat-modul': 'Buat Modul Baru', 'riwayat': 'Riwayat Modul', 'pengaturan': 'Pengaturan Profil'};
+        const titles = { 'buat-modul': 'Buat Modul Baru', 'riwayat': 'Riwayat Modul', 'pengaturan': 'Pengaturan Profil' };
         document.getElementById('page-title').innerText = titles[tabId];
 
-        // Active state navigasi
-        document.querySelectorAll('.nav-link').forEach(el => {
-            el.className = "nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white font-medium transition-colors";
-        });
-        btnElement.className = "nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg bg-blue-600 text-white font-medium transition-colors";
+        document.querySelectorAll('.nav-link').forEach(a => a.classList.remove('active'));
+        el.classList.add('active');
 
-        // Tutup mobile sidebar jika terbuka
         const sidebar = document.getElementById('sidebar');
-        if(!sidebar.classList.contains('-translate-x-full')) toggleSidebar();
+        if (!sidebar.classList.contains('-translate-x-full')) toggleSidebar();
+
+        return false;
     }
 
     function toggleSidebar() {
-        const sidebar = document.getElementById('sidebar');
-        const overlay = document.getElementById('mobile-overlay');
-        sidebar.classList.toggle('-translate-x-full');
-        overlay.classList.toggle('active');
+        document.getElementById('sidebar').classList.toggle('-translate-x-full');
+        document.getElementById('mobile-overlay').classList.toggle('active');
+    }
+
+    function resetForm() {
+        if (!confirm('Reset semua isian formulir?')) return;
+        document.querySelectorAll('#view-buat-modul input[type="text"], #view-buat-modul input[type="number"], #view-buat-modul select').forEach(el => el.value = '');
+        document.querySelectorAll('#view-buat-modul input[type="checkbox"]').forEach(el => el.checked = false);
+        document.getElementById('dynamic_mapel').innerHTML = '';
+        updateJenjang();
+        updateTemaUI();
+        togglePendekatanLainnya();
+        pendingData = null;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function showToast(msg) {
-        const toast = document.getElementById('toast');
+        const t = document.getElementById('toast');
         document.getElementById('toast-msg').innerText = msg;
-        toast.classList.remove('translate-y-20', 'opacity-0');
-        setTimeout(() => {
-            toast.classList.add('translate-y-20', 'opacity-0');
-        }, 3000);
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 3000);
     }
-</script>
+
+    // Tutup modal kalau klik overlay
+    document.getElementById('modal-overlay').addEventListener('click', function (e) {
+        if (e.target === this) closeModal();
+    });
+    </script>
 </body>
 </html>
