@@ -2,6 +2,14 @@
 
 Sebuah aplikasi web *client-side* yang dirancang untuk membantu tenaga pendidik dalam menyusun, mengelola, dan mengekspor dokumen Modul Kokurikuler secara digital, terstruktur, dan profesional.
 
+## 📖 Tentang Proyek (About)
+
+Sistem Penyusun Modul Kokurikuler Digital (ModulKu) lahir dari kebutuhan untuk mendigitalisasi proses administratif dan pedagogik tenaga pendidik. Seringkali, pembuatan modul pembelajaran atau asesmen memakan waktu lama karena format yang tidak standar dan pengaturan tata letak dokumen yang rumit.
+
+Aplikasi ini hadir sebagai solusi alat bantu (*tool*) berbasis web yang ringan dan cepat. Dengan pendekatan *SaaS-like interface*, pengguna cukup mengisi formulir yang sudah disesuaikan dengan standar pendidikan (seperti pendekatan belajar, dimensi profil lulusan, hingga integrasi mata pelajaran), lalu sistem akan menyusunnya menjadi dokumen PDF yang profesional dan siap cetak.
+
+Proyek ini juga merupakan implementasi dari penerapan antarmuka yang responsif (*Responsive Web Design*) dan manajemen status di sisi klien (*Client-Side State Management*).
+
 ## ✨ Fitur Utama
 
 - **Formulir Cerdas & Dinamis:** Antarmuka pengisian data yang dilengkapi logika kondisional (menyesuaikan jenjang Sekolah/Madrasah) dan mendukung berbagai instrumen pedagogik seperti Tema Lintas Mapel, 7 Kebiasaan Anak, dan Target Dimensi Profil Lulusan.
