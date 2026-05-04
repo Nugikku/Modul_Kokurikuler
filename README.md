@@ -29,4 +29,4 @@ Aplikasi ini berjalan murni di sisi klien (*Client-Side Rendering*) tanpa perlu 
 
 1. *Clone* repositori ini ke komputer Anda:
    ```bash
-   git clone [https://github.com/Nugikku/nama-repo-anda.git](https://github.com/Nugikku/nama-repo-anda.git)
+   git clone [https://github.com/Nugikku/nama-repo-anda.git](https://github.com/Nugikku/Modul-Kokurikuler.git)
